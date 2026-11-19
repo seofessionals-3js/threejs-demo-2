@@ -7,10 +7,11 @@ Ersetzen Sie die Teile in `[eckigen Klammern]` durch Ihr eigenes Thema.
 ```text
 Ich möchte eine scrollgesteuerte Landingpage bauen für [ein Architekturbüro, Ihr Thema].
 
-Die Idee: Die Seite öffnet mit einer flachen Schnittzeichnung eines [Hauses am Hang], geschnitten
-bei A-A. Schwarzes Poché, wo der Schnitt Wände und Decken trifft, schraffiertes Erdreich,
-Achsblasen, Höhenkoten, Maße und Raumnamen. Drei gestrichelte Linien in Bernstein zeigen die
-Sonnenwinkel am [21. Dezember, 21. März und 21. Juni]. Nichts wirkt dreidimensional.
+Die Idee: Die Seite öffnet mit einer flachen Schnittzeichnung eines [zweigeschossigen Hauses
+mit Flachdach], geschnitten bei A-A, weiß auf schwarzem Blatt. Weißes Poché, wo der Schnitt
+Wände und Decken trifft, schraffiertes Erdreich, Achsblasen, Höhenkoten, Maße und Raumnamen.
+Drei gestrichelte Linien in Rot zeigen die Sonnenwinkel am [21. Dezember, 21. März und
+21. Juni]. Nichts wirkt dreidimensional.
 
 Der Scrollablauf, der Reihe nach:
 1. Der Loader ist ein kleiner Übersichtsplan, über den sich die Schnittlinie A-A zeichnet.
@@ -19,23 +20,26 @@ Der Scrollablauf, der Reihe nach:
 2. Das Objektiv öffnet sich. Die Kamera kommt näher, während sich das Sichtfeld weitet, sodass
    der Schnitt auf dem Bildschirm seine Größe behält und sich die Räume dahinter zu einer
    Schnittperspektive öffnen. Dann dreht sich die Ansicht über Eck.
-3. Der Scan. Eine senkrechte Scan-Ebene fährt durch das Haus von [dem Garten bis zum Hang].
+3. Der Scan. Eine senkrechte Scan-Ebene fährt durch das Haus von [dem Garten bis zum Vorplatz].
    Auf der einen Seite ist das Haus noch Tusche, auf der anderen beleuchtetes Material. Wenn
    die Ebene das Glas passiert, verblassen die gestrichelten Sonnenlinien, und echte
    Sonnenstrahlen fallen im [Dezember]-Winkel herein.
-4. Der Rundgang. Auf Augenhöhe durch den Schnitt hinein, durch [den Wohnraum, das
-   Arbeitszimmer, die Galerie, das Kaminzimmer, das Schlafzimmer, den unteren Garten], an
+4. Der Rundgang. Auf Augenhöhe durch den Schnitt hinein, durch [den Wohnraum, die Treppe
+   hinauf auf die Galerie, ins Schlafzimmer, zurück in die Küche und hinaus in den Garten], an
    jedem Raum langsamer werdend und mit einer Beschriftung.
 5. Zurück durch den Schnitt. Der Scan läuft zurück, das Objektiv schließt sich, und das flache
    Blatt kehrt zurück mit [Projekt starten].
 
 Worauf es mir ankommt:
 - Die Zeichnung ist kein Bild. Sie ist das bei A-A geschnittene 3D-Modell, gesehen durch eine
-  perspektivische Kamera mit 0,12-Grad-Objektiv aus etwa 12 km Entfernung, deshalb wirkt sie
+  perspektivische Kamera mit 0,12-Grad-Objektiv aus etwa 11 km Entfernung, deshalb wirkt sie
   flach. Ein Vollbild-Shader tuscht sie aus einem Normalen- und Tiefen-Pass und mischt je nach
   Position des Scans das beleuchtete Rendering hinein.
 - Die Kamera schneidet nie. Das Öffnen des Objektivs ist ein einziger durchgehender Dolly-Zoom.
-- Der Look: ein CAD-Bildschirm. Papier #f2efe7, Tusche #1d1c19, ein Bernstein-Akzent #e85d04,
+- Nichts durchdringt sich: Die Kamera geht nur durch echte Öffnungen, auch in den Garten, und
+  hält Abstand zu Wänden, Glas, Möbeln und Figuren.
+- Der Look: ein CAD-Bildschirm bei Nacht. Blatt #0c0c0e, Tusche #f1eeea, ein roter Akzent
+  #e5202e. Das beleuchtete Haus steht wie ein Modell im schwarzen Studio: nur Grautöne und Rot.
   Chakra Petch für Überschriften, IBM Plex Mono für Beschriftungen. Passermarken in den Ecken,
   eine Brennweitenanzeige in mm, ein Schriftfeld und ein kleiner Live-Schnitt, der zeigt, wo
   die Kamera ist.

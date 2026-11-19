@@ -14,7 +14,7 @@ export function createReal(renderer, look, pieces, cam, { ao = true, shadowSize 
   const scene = new THREE.Scene();
   scene.background = look.sky;
   // subtle atmospheric horizon fog so distant grass blends softly into the afternoon sky
-  scene.fog = new THREE.FogExp2(0xe6d6be, 0.0045);
+  scene.fog = new THREE.FogExp2(0x0c0c0e, 0.012);
   const parts = { behind: new THREE.Group(), front: new THREE.Group(), people: new THREE.Group() };
   const buckets = {};
   for (const p of pieces) (buckets[p.part + '|' + p.mat] ||= []).push(p);
@@ -30,23 +30,22 @@ export function createReal(renderer, look, pieces, cam, { ao = true, shadowSize 
   }
   scene.add(parts.behind, parts.front, parts.people);
 
-  // light: a low warm sun, grazing specular fill light so surface bump textures catch reflections, and warm room lamps
-  const target = new THREE.Vector3(11, 0, -2);
-  const sun = new THREE.DirectionalLight(0xffd6a6, 4.1);
+  // light: a low white sun in a black studio, a grazing fill so the bump textures catch reflections, and the room lamps
+  const target = new THREE.Vector3(11, 2, -2);
+  const sun = new THREE.DirectionalLight(0xfff6ec, 4.6);
   sun.position.copy(target).addScaledVector(SUN_DIR, 90); sun.target.position.copy(target);
   sun.castShadow = true; sun.shadow.mapSize.set(shadowSize, shadowSize);
   Object.assign(sun.shadow.camera, { left: -26, right: 26, top: 22, bottom: -18, near: 30, far: 160 });
   sun.shadow.bias = -0.0003; sun.shadow.normalBias = 0.025;
-  const fillLight = new THREE.DirectionalLight(0xeef4fa, 0.85);
+  const fillLight = new THREE.DirectionalLight(0xf2f4f8, 0.7);
   fillLight.position.set(-18, 22, 28);
-  scene.add(sun, sun.target, fillLight, new THREE.HemisphereLight(0xe4ebf0, 0xd2c4b0, 0.82), new THREE.AmbientLight(0xfff5e8, 0.2));
+  scene.add(sun, sun.target, fillLight, new THREE.HemisphereLight(0xffffff, 0x5a5a60, 0.7), new THREE.AmbientLight(0xffffff, 0.16));
   for (const [x, y, z, i] of [
-    [12.85, 1.58, -6.75, 2.8], [15.2, 2.1, -3.5, 2.4], [7.8, 1.72, -1.4, 5.2],
-    [6.8, 4.8, -1.6, 2.8], [12.8, 5.0, -3.0, 4.4],
-    [12.8, -2.25, -7.38, 2.2], [16.2, -2.25, -7.38, 2.2], [17.0, -1.72, -2.3, 1.8],
-    [4.8, -2.6, -2.5, 5.2], [5.2, -1.72, -3.9, 2.2],
+    [13.0, 1.6, -5.8, 2.8], [10.7, 1.7, -3.4, 5.0], [7.75, 2.2, -4.2, 2.6], [16.0, 0.7, -6.5, 3.4],
+    [15.1, 3.8, -4.0, 4.6], [12.7, 4.3, -2.9, 2.6], [10.5, 4.6, 2.0, 2.2],
+    [5.75, 3.95, -4.1, 2.0], [5.75, 3.95, -1.1, 2.0], [14.8, 1.2, 3.2, 2.0],
   ]) {
-    const l = new THREE.PointLight(0xffc990, i, 0, 2); l.position.set(x, y, z); scene.add(l);
+    const l = new THREE.PointLight(0xfff1e2, i, 0, 2); l.position.set(x, y, z); scene.add(l);
   }
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -86,7 +85,7 @@ export function createReal(renderer, look, pieces, cam, { ao = true, shadowSize 
   const shaftMat = new THREE.ShaderMaterial({
     depthTest: false, depthWrite: false,
     uniforms: { tND: { value: null }, tSun: { value: sunRT.texture }, uSunMat: { value: sunMat }, uCamWorld: { value: new THREE.Matrix4() }, uFr: { value: new THREE.Vector4() }, uB: { value: 0 },
-      uBoxMin: { value: new THREE.Vector3(4.0, -3.2, -7.7) }, uBoxMax: { value: new THREE.Vector3(18.3, 7.6, 0) } },
+      uBoxMin: { value: new THREE.Vector3(5.3, 0, -7.7) }, uBoxMax: { value: new THREE.Vector3(16.92, 6.0, 0) } },
     vertexShader: FULL_VS,
     fragmentShader: `precision highp float;
       uniform sampler2D tND, tSun; uniform mat4 uSunMat, uCamWorld; uniform vec4 uFr; uniform float uB; uniform vec3 uBoxMin, uBoxMax;

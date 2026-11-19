@@ -27,7 +27,7 @@ const INK = {
     uScanX: { value: 100 }, uScan: { value: 0 }, uReal: { value: 0 }, uShaft: { value: 0 }, uShaftK: { value: 1 },
     uSweepMode: { value: 0 }, uTime: { value: 0 },
     uSunDir: { value: new THREE.Vector3(0, 1, 0) },
-    cPaper: { value: srgb(0xf2efe7) }, cInk: { value: srgb(0x1d1c19) }, cPoche: { value: srgb(0x161513) }, cAccent: { value: srgb(0xd4501e) }, cSun: { value: srgb(0xffd9a8) },
+    cPaper: { value: srgb(0x0c0c0e) }, cInk: { value: srgb(0xf1eeea) }, cPoche: { value: srgb(0xebe8e3) }, cAccent: { value: srgb(0xe5202e) }, cSun: { value: srgb(0xfff4ea) },
   },
   vertexShader: FULL_VS,
   fragmentShader: `
@@ -45,6 +45,12 @@ const INK = {
     float hash3(vec3 p){ return fract(sin(dot(p, vec3(127.1, 311.7, 74.7))) * 43758.5453); }
     bool isP(vec4 t){ return t.z > 0. && t.w > 4.5 && t.w < 6.5; }
     bool isL(vec4 t){ return abs(t.w - 6.) < .5; }
+    // the lit house is graded to the sheet: neutral greys, and only warm saturated colours survive, as the brand red
+    vec3 night(vec3 c){
+      float mx = max(c.r, max(c.g, c.b)), l = dot(c, vec3(.2126, .7152, .0722));
+      float r = smoothstep(.54, .66, (c.r - max(c.g, c.b)) / max(mx, 1e-4)) * smoothstep(.14, .32, mx);
+      return mix(vec3(l) * vec3(1., .995, 1.03), vec3(.898, .11, .16) * clamp(l * 3.1 + .12, 0., 1.15), r);
+    }
     vec3 edgeAt(vec2 uv, vec4 c){
       vec2 o = px / res;
       if (c.z <= 0.) {
@@ -101,14 +107,14 @@ const INK = {
         float layer = max(0., -worldAt(vUv, E.y).z);
         float w = mix(1., .46, smoothstep(.4, 12., layer));
         float rv = 1. - smoothstep(uLines - 1.4, uLines, layer);
-        ink = E.x * .93 * w * rv;
+        ink = E.x * .9 * w * rv;
       }
       vec3 col = mix(dcol, cInk, ink);
       if (uReal > .5 && m < .999) {
         vec3 real = texture2D(tReal, vUv).rgb;
         if (uSweepMode > .5) {
-          // crisper architectural contrast and warm gallery white balance
-          real = pow(clamp(real * 1.04, 0., 1.), vec3(1.05));
+          // crisper architectural contrast, then the black, white and red grade
+          real = night(pow(clamp(real * 1.04, 0., 1.), vec3(1.05)));
         }
         if (uShaft > 0.) {
           vec3 rd = normalize(wp - cam); float mu = dot(rd, uSunDir), g = .55;
@@ -159,7 +165,7 @@ const INK = {
             float env = sin(u * 3.14159);
             float contour = 1. - smoothstep(0.0, 0.035, abs(fract(wp.y) - 0.5));
             float wire = clamp(E.x * 0.95 + contour * 0.38, 0., 1.);
-            col = mix(col, vec3(0.11, 0.11, 0.10), env * 0.16 * uScan);
+            col = mix(col, cInk, env * 0.07 * uScan);
             col = mix(col, cAccent, clamp(wire * env * 0.92 + env * 0.12, 0., 1.) * uScan);
           }
           float line = clamp(1.65 * uDpr + .5 - dx, 0., 1.);

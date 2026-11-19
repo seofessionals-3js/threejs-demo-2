@@ -9,9 +9,12 @@
 <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,500;0,600;0,700;1,600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
-    --paper: #f2efe7;
-    --ink: #1d1c19;
-    --accent: #e85d04;
+    /* black sheet, white ink, red pen */
+    --paper: #0c0c0e;
+    --ink: #f1eeea;
+    --accent: #e5202e;
+    --accent-hi: #ff4d57;
+    --surface: rgba(20, 20, 23, 0.92);
     --mono: 'IBM Plex Mono', ui-monospace, monospace;
     --display: 'Chakra Petch', sans-serif;
     --sans: 'Chakra Petch', sans-serif;
@@ -23,13 +26,13 @@
   #ov { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
   #ov text { font-family: var(--mono); font-size: 10.5px; letter-spacing: .08em; fill: var(--ink); }
   #ov .room { font-size: 9.5px; letter-spacing: .16em; font-weight: 500; }
-  #ov .sun { fill: var(--accent); font-weight: 500; }
+  #ov .sun { fill: var(--accent-hi); font-weight: 500; }
   #hud { position: fixed; inset: 0; pointer-events: none; }
   #hud > * { position: absolute; }
 
   /* Viewport CAD registration brackets */
   #cad-hud { display: block; inset: 12px; pointer-events: none; z-index: 2; }
-  #cad-hud .ch-c { position: absolute; width: 14px; height: 14px; border-color: rgba(29, 28, 25, 0.45); border-style: solid; }
+  #cad-hud .ch-c { position: absolute; width: 14px; height: 14px; border-color: rgba(241, 238, 234, 0.45); border-style: solid; }
   #cad-hud .tl { left: 0; top: 0; border-width: 1.5px 0 0 1.5px; }
   #cad-hud .tr { right: 0; top: 0; border-width: 1.5px 1.5px 0 0; }
   #cad-hud .bl { left: 0; bottom: 0; border-width: 0 0 1.5px 1.5px; }
@@ -46,7 +49,7 @@
   .cta {
     right: var(--g); top: 20px;
     font: 600 10.5px var(--mono); letter-spacing: .12em; text-transform: uppercase;
-    background: rgba(242, 239, 231, 0.94); border: 1.5px solid var(--ink);
+    background: rgba(12, 12, 14, 0.94); border: 1.5px solid var(--ink);
     padding: 8px 14px; border-radius: 0; opacity: 0; pointer-events: auto;
     color: var(--ink); text-decoration: none;
   }
@@ -59,7 +62,7 @@
   .head .ln > span { display: block; transform: translateY(125%); opacity: 0; }
   .head em {
     font-style: normal; color: var(--accent);
-    background: rgba(232, 93, 4, 0.1); padding: 0 8px; border-left: 3px solid var(--accent);
+    background: rgba(229, 32, 46, 0.1); padding: 0 8px; border-left: 3px solid var(--accent);
   }
 
   .sub {
@@ -71,16 +74,16 @@
   .chip {
     left: var(--g); bottom: 26px;
     font: 500 10px var(--mono); letter-spacing: .14em; text-transform: uppercase;
-    background: var(--ink); color: var(--paper); padding: 7px 13px;
+    background: var(--surface); color: var(--ink); padding: 7px 13px; border: 1px solid rgba(241, 238, 234, 0.2);
     opacity: 0; white-space: nowrap; z-index: 2;
   }
-  .chip b { font-weight: 600; color: #ff7b29; }
+  .chip b { font-weight: 600; color: var(--accent-hi); }
 
   .hint {
     left: 50%; bottom: 24px;
     font: 500 10px var(--mono); letter-spacing: .2em; text-transform: uppercase;
     opacity: 0; white-space: nowrap;
-    background: rgba(242, 239, 231, 0.88); padding: 5px 10px; border: 1px solid rgba(29, 28, 25, 0.2);
+    background: rgba(12, 12, 14, 0.88); padding: 5px 10px; border: 1px solid rgba(241, 238, 234, 0.2);
   }
 
   #tb {
@@ -100,9 +103,9 @@
   #tb .fade { opacity: 0; }
   #tb .stamp {
     position: absolute; right: 96px; top: 50px; padding: 4px 8px;
-    border: 1.5px solid var(--accent); color: var(--accent);
+    border: 1.5px solid var(--accent); color: var(--accent-hi);
     font: 600 11px var(--mono); letter-spacing: .16em; text-transform: uppercase;
-    opacity: 0; transform: rotate(-8deg); background: rgba(242, 239, 231, 0.85);
+    opacity: 0; transform: rotate(-8deg); background: rgba(12, 12, 14, 0.85);
   }
 
   #kp { position: fixed; left: 0; top: 0; width: 260px; height: 159px; overflow: visible; pointer-events: none; }
@@ -113,34 +116,34 @@
     text-align: center; font: 500 10.5px/1.9 var(--mono); letter-spacing: .2em;
     text-transform: uppercase; white-space: nowrap;
   }
-  #lcap span { color: var(--accent); font-weight: 600; }
+  #lcap span { color: var(--accent-hi); font-weight: 600; }
   #track { height: 2800vh; }
 
   /* Room callout badge */
   .room {
     left: var(--g); bottom: 64px; opacity: 0;
     display: flex; flex-direction: column; gap: 4px;
-    background: rgba(29, 28, 25, 0.93); color: var(--paper);
-    padding: 14px 18px; border-left: 3px solid var(--accent);
+    background: var(--surface); color: var(--ink);
+    padding: 14px 18px; border-left: 3px solid var(--accent); box-shadow: inset 0 0 0 1px rgba(241, 238, 234, 0.07);
     z-index: 2;
   }
   .room .r-txt { display: flex; flex-direction: column; gap: 4px; }
-  .room .lv { font: 600 10px var(--mono); letter-spacing: .14em; color: #ff7b29; }
-  .room b { font: 600 32px/1 var(--display); text-transform: uppercase; letter-spacing: .01em; color: var(--paper); }
-  .room .nt { font: 400 10px var(--mono); letter-spacing: .12em; text-transform: uppercase; color: rgba(242, 239, 231, 0.82); }
+  .room .lv { font: 600 10px var(--mono); letter-spacing: .14em; color: var(--accent-hi); }
+  .room b { font: 600 32px/1 var(--display); text-transform: uppercase; letter-spacing: .01em; color: var(--ink); }
+  .room .nt { font: 400 10px var(--mono); letter-spacing: .12em; text-transform: uppercase; color: rgba(241, 238, 234, 0.72); }
 
   /* Live CAD section radar */
   #cad-map {
     display: block; right: var(--g); bottom: 26px; width: 204px; height: 100px;
-    background: rgba(29, 28, 25, 0.93); color: var(--paper); border: 1px solid var(--accent);
+    background: var(--surface); color: var(--ink); border: 1px solid var(--accent);
     padding: 8px 10px; font: 500 8.5px/1.3 var(--mono); letter-spacing: .08em; text-transform: uppercase;
     opacity: 0; z-index: 3; pointer-events: none; user-select: none;
   }
   #cad-map.interactive { pointer-events: auto; }
   #cad-map svg { width: 100%; height: 70px; display: block; margin-top: 4px; overflow: visible; }
-  #cad-map .cm-zone { fill: rgba(232, 93, 4, 0.0); stroke: none; cursor: pointer; transition: fill .15s ease; }
-  #cad-map .cm-zone.active { fill: rgba(232, 93, 4, 0.16); stroke: rgba(232, 93, 4, 0.45); stroke-width: 0.22; }
-  #cad-map .cm-zone:hover { fill: rgba(232, 93, 4, 0.32); stroke: #ff7b29; stroke-width: 0.3; }
+  #cad-map .cm-zone { fill: rgba(229, 32, 46, 0.0); stroke: none; cursor: pointer; transition: fill .15s ease; }
+  #cad-map .cm-zone.active { fill: rgba(229, 32, 46, 0.16); stroke: rgba(229, 32, 46, 0.45); stroke-width: 0.22; }
+  #cad-map .cm-zone:hover { fill: rgba(229, 32, 46, 0.34); stroke: #ff4d57; stroke-width: 0.3; }
 
   /* End call to action */
   .end { left: var(--g); top: 80px; visibility: hidden; pointer-events: auto; }
@@ -149,7 +152,7 @@
   .end h2 .ln > span { display: block; transform: translateY(110%); }
   .end em {
     font-style: normal; color: var(--accent);
-    background: rgba(232, 93, 4, 0.1); padding: 0 8px; border-left: 3px solid var(--accent);
+    background: rgba(229, 32, 46, 0.1); padding: 0 8px; border-left: 3px solid var(--accent);
   }
   .end .sub2 { margin: 18px 0 0 2px; font: 500 10.5px/1.6 var(--mono); letter-spacing: .06em; max-width: 330px; text-transform: uppercase; opacity: 0; }
   .end .btn {
@@ -158,7 +161,7 @@
     color: var(--paper); background: var(--ink); padding: 12px 18px;
     border: 1.5px solid var(--ink); border-radius: 0; text-decoration: none; opacity: 0;
   }
-  .end .btn i { font-style: normal; color: #ff7b29; margin-left: 8px; }
+  .end .btn i { font-style: normal; color: var(--accent); margin-left: 8px; }
 
   @media (max-aspect-ratio: 9/10) {
     :root { --g: 18px; }
@@ -199,7 +202,7 @@
   <div class="brand">Cota</div>
   <a class="cta" href="#start">Projekt starten</a>
   <h1 class="head"><span class="ln"><span>Das Haus im</span></span><span class="ln"><span><em>Schnitt sehen.</em></span></span></h1>
-  <p class="sub">Ein Haus am Hang, aufgeschnitten bei A-A. Scrollen Sie und gehen Sie durch den Schnitt hinein.</p>
+  <p class="sub">Zwei Geschosse unter einem flachen Dach, aufgeschnitten bei A-A. Scrollen Sie und gehen Sie durch den Schnitt hinein.</p>
   <div class="chip"></div>
   <div class="hint">Scrollen, um das Objektiv zu öffnen</div>
   <div class="room">
@@ -207,44 +210,43 @@
   </div>
   <div id="cad-map">
     <div id="cm-lbl">SEC A-A // POS 15.6, 1.6M</div>
-    <svg viewBox="1 -9.2 29 14" aria-label="Interaktives Schnitt-Radar">
+    <svg viewBox="1 -8.4 29 11" aria-label="Interaktives Schnitt-Radar">
       <g transform="scale(1,-1)">
-        <rect class="cm-zone" data-stop="Das Arbeitszimmer" data-tag="ARBEITEN +3.20M" x="4" y="3.2" width="6.4" height="4.6"/>
-        <rect class="cm-zone" data-stop="Die obere Lounge" data-tag="LOUNGE +3.20M" x="10.4" y="3.2" width="4.7" height="4.6"/>
-        <rect class="cm-zone" data-stop="Der Wohnraum" data-tag="WOHNEN ±0.00M" x="11" y="0" width="7.3" height="3.2"/>
-        <rect class="cm-zone" data-stop="Über dem Wohnraum" data-tag="GALERIE +3.20M" x="15.1" y="3.2" width="3.2" height="3.4"/>
-        <rect class="cm-zone" data-stop="Das Kaminzimmer" data-tag="KAMIN -3.20M" x="4" y="-3.4" width="7" height="3.4"/>
-        <rect class="cm-zone" data-stop="Das Schlafzimmer" data-tag="SCHLAFEN -3.20M" x="11" y="-3.4" width="7.3" height="3.4"/>
-        <rect class="cm-zone" data-stop="Der untere Garten" data-tag="GARTEN -3.20M" x="18.3" y="-4.6" width="10.5" height="4.6"/>
-        <path d="M1.5 0 H4 M4 -3.4 H18.3 V0 H22.5 M18.3 -3.4 H24.5 L29 -4.8 M4 0 H18.3 M4 3.2 H15.1 M10.4 3.2 V7.8 M4 -3.4 V7.8 H15.2 V6.6 H19.5 M18.3 -3.4 V6.6" fill="none" stroke="#f2efe7" stroke-width="0.42" opacity="0.72" pointer-events="none"/>
-        <polygon id="cm-cone" points="15.6,1.6 12.2,3.1 12.2,0.1" fill="rgba(232,93,4,0.28)" stroke="#e85d04" stroke-width="0.24" pointer-events="none"/>
-        <line id="cm-scan" x1="21.8" y1="-4.8" x2="21.8" y2="8.5" stroke="#e85d04" stroke-width="0.5" stroke-dasharray="1 0.8" pointer-events="none"/>
-        <circle id="cm-dot" cx="15.6" cy="1.6" r="1.15" fill="#e85d04" pointer-events="none"/>
+        <rect class="cm-zone" data-stop="Das Schlafzimmer" data-tag="SCHLAFEN +3.10M" x="5.3" y="3.1" width="4.3" height="2.9"/>
+        <rect class="cm-zone" data-stop="Die Galerie" data-tag="GALERIE +3.10M" x="9.75" y="3.1" width="3.85" height="2.9"/>
+        <rect class="cm-zone" data-stop="Über dem Wohnraum" data-tag="LUFTRAUM +3.10M" x="13.6" y="3.1" width="3.3" height="2.9"/>
+        <rect class="cm-zone" data-stop="Küche &amp; Essen" data-tag="KÜCHE ±0.00M" x="5.3" y="0" width="6.9" height="2.75"/>
+        <rect class="cm-zone" data-stop="Der Wohnraum" data-tag="WOHNEN ±0.00M" x="12.2" y="0" width="4.7" height="2.75"/>
+        <rect class="cm-zone" data-stop="Der Garten" data-tag="GARTEN -0.60M" x="17" y="-0.6" width="12" height="3.4"/>
+        <path d="M1.5 0 H5 M5 -0.35 V6.4 H17.6 M5 0 H21 V-0.6 H29.5 M5.3 3.1 H13.6 M9.67 3.1 V6 M13.6 3.1 V4.15 M16.94 0 V6 M7.2 0 L12 3.1" fill="none" stroke="#f1eeea" stroke-width="0.34" opacity="0.72" pointer-events="none"/>
+        <polygon id="cm-cone" points="11.5,1.6 8.1,3.1 8.1,0.1" fill="rgba(229,32,46,0.3)" stroke="#e5202e" stroke-width="0.2" pointer-events="none"/>
+        <line id="cm-scan" x1="21.8" y1="-2.2" x2="21.8" y2="7.8" stroke="#e5202e" stroke-width="0.4" stroke-dasharray="1 0.8" pointer-events="none"/>
+        <circle id="cm-dot" cx="11.5" cy="1.6" r="0.9" fill="#e5202e" pointer-events="none"/>
       </g>
     </svg>
   </div>
   <div class="end">
     <h2><span class="ln"><span>Erst zeichnen wir es.</span></span><span class="ln"><span><em>Dann bauen wir es.</em></span></span></h2>
-    <p class="sub2">Cota ist ein kleines Büro für Häuser auf schwierigem Gelände. Jedes Projekt beginnt mit einem Schnitt wie diesem.</p>
+    <p class="sub2">Cota ist ein kleines Büro für klare Häuser. Jedes Projekt beginnt mit einem Schnitt wie diesem.</p>
     <a class="btn" href="#start">Projekt starten<i>&rarr;</i></a>
   </div>
   <div id="tb">
     <div class="frame"></div>
     <div class="t1 fade">Schnitt A-A</div>
     <div class="rule fade"></div><div class="vr fade"></div>
-    <div class="rows fade"><div>Haus am Hang</div><div class="scale">Maßstab 1:100</div><div>Blatt A-301</div></div>
+    <div class="rows fade"><div>Haus Linie</div><div class="scale">Maßstab 1:100</div><div>Blatt A-301</div></div>
     <div class="kp"></div>
     <div class="stamp">Gebaut 2026</div>
   </div>
 </div>
 <svg id="kp" viewBox="-0.5 -10.5 27 16.5" aria-hidden="true">
-  <path class="d" pathLength="1" stroke="#1d1c19" data-w="1.4" d="M3.7 -8 H18.3 V4 H3.7 Z"/>
-  <path class="d" pathLength="1" stroke="#1d1c19" data-w="0.9" d="M18.3 -8 H22.5 V1.5 H18.3"/>
-  <path class="d" pathLength="1" stroke="#1d1c19" data-w="0.9" d="M10.4 -7.7 V-5.0 M10.4 -4.0 V3.7 M15.1 -8 V4"/>
-  <path class="d" pathLength="1" stroke="#1d1c19" data-w="0.7" d="M5.5 -7.7 H10.3 V-6.5 H5.5 Z M6.3 -7.7 V-6.5 M7.1 -7.7 V-6.5 M7.9 -7.7 V-6.5 M8.7 -7.7 V-6.5 M9.5 -7.7 V-6.5"/>
-  <line id="kpcut" x1="0.4" y1="0" x2="25.6" y2="0" stroke="#e85d04" data-w="1.4" pathLength="1"/>
-  <g id="kpa0" opacity="0"><path stroke="#e85d04" data-w="1.2" d="M0.4 0 V-2 M-0.25 -1.2 L0.4 -2 L1.05 -1.2"/><text x="0.4" y="-2.7" text-anchor="middle">A</text></g>
-  <g id="kpa1" opacity="0"><path stroke="#e85d04" data-w="1.2" d="M25.6 0 V-2 M24.95 -1.2 L25.6 -2 L26.25 -1.2"/><text x="25.6" y="-2.7" text-anchor="middle">A</text></g>
+  <path class="d" pathLength="1" stroke="#f1eeea" data-w="1.4" d="M5 -8 H17 V4 H5 Z"/>
+  <path class="d" pathLength="1" stroke="#f1eeea" data-w="0.9" d="M17 -8 H21 V4 H17"/>
+  <path class="d" pathLength="1" stroke="#f1eeea" data-w="0.9" d="M9.67 -6.4 V-5.4 M9.67 -4.4 V3.7 M5.3 -6.4 H9.67 M13.6 -8 V4"/>
+  <path class="d" pathLength="1" stroke="#f1eeea" data-w="0.7" d="M7.2 -7.7 H12 V-6.5 H7.2 Z M8 -7.7 V-6.5 M8.8 -7.7 V-6.5 M9.6 -7.7 V-6.5 M10.4 -7.7 V-6.5 M11.2 -7.7 V-6.5"/>
+  <line id="kpcut" x1="0.4" y1="0" x2="25.6" y2="0" stroke="#e5202e" data-w="1.4" pathLength="1"/>
+  <g id="kpa0" opacity="0"><path stroke="#e5202e" data-w="1.2" d="M0.4 0 V-2 M-0.25 -1.2 L0.4 -2 L1.05 -1.2"/><text x="0.4" y="-2.7" text-anchor="middle">A</text></g>
+  <g id="kpa1" opacity="0"><path stroke="#e5202e" data-w="1.2" d="M25.6 0 V-2 M24.95 -1.2 L25.6 -2 L26.25 -1.2"/><text x="25.6" y="-2.7" text-anchor="middle">A</text></g>
 </svg>
 <div id="lcap"><div>Schnitt A-A</div><div>Lädt <span id="lnum">000</span></div></div>
 <main id="track"></main>

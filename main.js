@@ -2,7 +2,7 @@
 // cut, and back out to the drawing. Everything on screen is a function of two numbers: T (seconds since the page was
 // first seen) and the scroll. ?offline hands both to window.__frame(T, s), so a recorder can step it frame by frame.
 import * as THREE from 'three';
-import { buildPieces, solids, CUT } from './house.js';
+import { buildPieces, solids, CUT, GX, DOOR, ST0, ST1, OG } from './house.js';
 import { createDrawing } from './draw.js';
 import { createLook } from './look.js';
 import { createReal, SUN_DIR } from './real.js';
@@ -18,7 +18,7 @@ const eExpo = (x) => (x >= 1 ? 1 : 1 - Math.pow(2, -10 * cl(x)));
 const eIO = (x) => { x = cl(x); return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2; };
 const eSine = (x) => 0.5 - 0.5 * Math.cos(Math.PI * cl(x));
 const V3 = (a) => new THREE.Vector3(a[0], a[1], a[2]);
-const INK = '#1d1c19', PAPER = '#f2efe7', ACC = '#e85d04';
+const INK = '#f1eeea', PAPER = '#0c0c0e', ACC = '#e5202e', ACC_HI = '#ff4d57', PLATE = '#141416';
 
 window.__mainOwns = true;
 window.__loader.p = 0.3;
@@ -31,7 +31,7 @@ renderer.setPixelRatio(DPR);
 renderer.setSize(W, H, false);
 
 // ---------------------------------------------------------------- the camera
-// One perspective camera for the whole page. The flat section is a 0.12 degree lens about 12 km away.
+// One perspective camera for the whole page. The flat section is a 0.12 degree lens about 11 km away.
 // A pose is a position, a point to look at, a lens (vertical fov) and a lens shift in metres at the target.
 const cam = new THREE.PerspectiveCamera();
 cam.userData.fr = new THREE.Vector4();
@@ -66,19 +66,19 @@ function frames() {
   const asp = W / H;
   F.portrait = asp < 0.9;
   if (!F.portrait) {
-    const vw = Math.max(44, 25.3 * asp);
-    F.hero = { t: [13, 1.2, 0], hgt: vw / asp, sx: 0, sy: 0 };
+    const vw = Math.max(36, 21 * asp);
+    F.hero = { t: [12.6, 2.2, 0], hgt: vw / asp, sx: 0, sy: 0 };
     F.f1 = 58;
-    F.end = { t: [11.2, 1.1, -4.6], yaw: 39, pitch: 8.2, fov: 35, dist: 28.4 };
-    F.sweep = { t: [13.8, 1.55, -4.1], yaw: 20, pitch: 4.2, fov: 45, dist: 17.5 };
-    F.levels = { x0: 23.2, x1: 25.8, short: false };
+    F.end = { t: [10.9, 2.5, -4.4], yaw: 39, pitch: 8.2, fov: 35, dist: 25.5 };
+    F.sweep = { t: [12.2, 2.7, -4.0], yaw: 20, pitch: 4.2, fov: 45, dist: 16.2 };
+    F.levels = { x0: 22.6, x1: 25.0, short: false };
   } else {
-    const vw = 25.5, vh = vw / asp;
-    F.hero = { t: [12.9, 1.2, 0], hgt: vh, sx: 0, sy: 1.8 + 0.04 * vh - 1.2 };
+    const vw = 21.5, vh = vw / asp;
+    F.hero = { t: [12.4, 2.2, 0], hgt: vh, sx: 0, sy: 1.8 + 0.04 * vh - 1.2 };
     F.f1 = 72;
-    F.end = { t: [12.6, 2.2, -3.8], yaw: 49, pitch: 9, fov: 52, dist: 51 };
-    F.sweep = { t: [14.2, 1.8, -3.6], yaw: 28, pitch: 6, fov: 56, dist: 31 };
-    F.levels = { x0: 22.8, x1: 24.7, short: true };
+    F.end = { t: [11.6, 3.0, -3.8], yaw: 49, pitch: 9, fov: 52, dist: 44 };
+    F.sweep = { t: [12.6, 2.8, -3.6], yaw: 28, pitch: 6, fov: 56, dist: 27 };
+    F.levels = { x0: 21.6, x1: 23.4, short: true };
   }
   F.slot = document.querySelector('#tb .kp').getBoundingClientRect();
 }
@@ -106,36 +106,45 @@ function walkKeys() {
   const pf = (f) => (F.portrait ? Math.min(78, f * 1.22) : f); // a tall frame needs a wider lens, but not a fisheye
   const K = (p, t, fov, rest = 0, label = null) => ({ p: V3(p), t: V3(t), fov: pf(fov), rest, label });
   const sw = orbitPose(F.sweep), se = orbitPose(F.end);
+  const up = OG + EYE, dz = (DOOR[0] + DOOR[1]) / 2;            // eye height upstairs, the middle of the terrace door
+  const sy = (x) => EYE + cl((x - ST0) / (ST1 - ST0)) * OG;     // eye height on the flight
   return [
     { p: se.p, t: se.t, fov: F.end.fov, rest: 0 },
     { p: sw.p, t: sw.t, fov: F.sweep.fov, rest: 0 },
-    K([16.4, 1.75, 9.5], [14.3, 1.9, -4.0], 50, 30, ['±0.00', 'Durch den Schnitt', 'Schnitt A-A, auf Augenhöhe geöffnet']),
-    K([15.8, EYE, -0.4], [12.4, 1.85, -6.4], 54, 70, ['±0.00', 'Der Wohnraum', '6,40 m hoch, die tiefe Dezembersonne']),
-    K([11.9, EYE, -4.2], [7.0, 2.5, -7.1], 56, 0),
-    K([8.4, 2.95, -7.05], [4.6, 5.0, -7.05], 58, 0),
-    K([4.85, 3.2 + EYE, -7.0], [6.5, 4.6, -2.5], 58, 0),
-    K([5.0, 3.2 + EYE, -5.5], [8.5, 4.5, -3.2], 56, 0),
-    K([8.8, 3.2 + EYE, -4.6], [5.0, 4.3, 0.4], 52, 55, ['+3.20', 'Das Arbeitszimmer', 'Bücher an der Nordwand, Licht von oben']),
-    K([10.42, 3.2 + EYE, -4.5], [13.4, 4.2, -2.0], 54, 0),
-    K([11.5, 3.2 + EYE, -4.5], [13.6, 3.85, -1.6], 54, 65, ['+3.20', 'Die obere Lounge', 'Sonniges Atelier über dem Wohnraum']),
-    K([14.55, 3.2 + EYE, -4.8], [16.8, 0.3, -1.0], 56, 55, ['+3.20', 'Über dem Wohnraum', 'Vom Rand der Galerie']),
-    K([10.42, 3.2 + EYE, -4.5], [6.8, 4.3, -5.2], 56, 0),
-    K([5.0, 3.2 + EYE, -5.4], [5.2, 4.4, -8.0], 58, 0),
-    K([5.0, 3.2 + EYE, -6.95], [10.5, 2.0, -7.05], 58, 0),
-    K([7.9, 3.4, -7.05], [12.0, 0.8, -7.05], 58, 0),
-    K([10.9, EYE, -6.9], [8.0, 0.0, -5.8], 58, 0),
-    K([8.4, 0.35, -5.8], [4.5, -2.4, -5.8], 58, 0),
-    K([5.6, -3.2 + EYE, -4.8], [9.0, -2.0, -2.0], 56, 0),
-    K([9.4, -3.2 + EYE, -4.75], [4.6, -2.5, -2.2], 52, 55, ['-3.20', 'Das Kaminzimmer', 'Ein Feuer unter dem Wohnraum']),
-    K([9.8, -3.2 + EYE, -2.25], [16.2, -2.2, -2.35], 54, 0),
-    K([11.1, -3.2 + EYE, -2.15], [16.0, -2.3, -3.8], 54, 0),
-    K([12.1, -3.2 + EYE, -1.9], [15.3, -2.5, -6.6], 52, 70, ['-3.20', 'Das Schlafzimmer', 'Schlafen zum Garten hin']),
-    K([17.3, -3.2 + EYE, -2.95], [26, -1.8, -2.4], 54, 0),
-    K([29.2, -1.5, 3.6], [15.0, 0.9, -2.8], 52, 70, ['-3.20', 'Der untere Garten', 'Das Haus von unten']),
-    K([23.6, 1.9, 0.2], [14.0, 1.9, -2.4], 54, 0),
-    K([20.4, 1.65, -1.0], [12.5, 1.9, -2.2], 54, 0),
-    K([15.0, 1.65, -1.6], [14.6, 1.85, -7.6], 54, 0),
-    K([15.8, 1.85, 8.8], [13.2, 2.1, -3.8], 50, 40, ['±0.00', 'Zurück durch den Schnitt', 'Das Haus öffnet sich wieder bei A-A']),
+    K([13.9, 1.75, 9.2], [12.0, 2.0, -4.0], 50, 30, ['±0.00', 'Durch den Schnitt', 'Schnitt A-A, auf Augenhöhe geöffnet']),
+    K([14.9, EYE, -0.9], [12.3, 2.3, -6.6], 54, 70, ['±0.00', 'Der Wohnraum', '6,00 m hoch, die tiefe Dezembersonne']),
+    K([12.4, EYE, -1.5], [8.6, 1.5, -4.4], 56, 0),
+    K([8.9, EYE, -1.55], [6.2, 1.6, -5.6], 56, 0),
+    K([6.62, EYE, -2.6], [6.4, 1.7, -7.4], 58, 0),
+    K([6.5, EYE, -5.9], [9.8, 2.6, -7.2], 58, 0),
+    K([6.35, EYE, -7.05], [9.5, 3.4, -7.1], 58, 0),
+    K([8.6, sy(8.6), -7.1], [11.6, 4.9, -7.0], 58, 0),
+    K([10.8, sy(10.8), -7.1], [12.8, 4.6, -6.0], 58, 0),
+    K([12.7, up, -6.9], [12.6, 4.3, -2.6], 56, 0),
+    K([12.3, up, -5.4], [12.6, 4.15, -1.2], 54, 55, ['+3.10', 'Die Galerie', 'Bücher, Schreibtisch, der Blick in den Luftraum']),
+    K([13.05, up, -4.6], [16.4, 0.4, -3.9], 56, 55, ['+3.10', 'Über dem Wohnraum', 'Vom Rand der Galerie']),
+    K([11.2, up, -4.9], [8.0, 4.3, -4.6], 56, 0),
+    K([9.0, up, -4.87], [6.4, 4.0, -2.8], 56, 0),
+    K([8.5, up, -4.3], [6.0, 3.9, -2.2], 54, 65, ['+3.10', 'Das Schlafzimmer', 'Nach Norden, ruhig und kühl']),
+    K([8.85, up, -4.9], [11.5, 4.3, -5.0], 56, 0),
+    K([10.6, up, -4.95], [12.6, 4.4, -6.2], 56, 0),
+    K([12.3, up, -5.6], [12.2, 4.3, -7.4], 58, 0),
+    K([12.75, up, -6.75], [10.0, 3.6, -7.2], 58, 0),
+    K([11.6, sy(11.6), -7.1], [8.6, 2.2, -7.1], 58, 0),
+    K([9.2, sy(9.2), -7.1], [6.4, 1.2, -6.9], 58, 0),
+    K([6.6, EYE, -7.0], [6.4, 1.5, -4.0], 58, 0),
+    K([6.6, EYE, -5.6], [8.6, 1.3, -3.0], 56, 0),
+    K([7.0, EYE, -1.35], [11.4, 1.15, -3.9], 54, 55, ['±0.00', 'Küche & Essen', 'Kochinsel, Tisch für sechs, drei Kugelleuchten']),
+    K([9.6, EYE, -1.5], [14.4, 1.4, -3.2], 54, 0),
+    K([13.8, EYE, -1.7], [17.6, 1.5, dz], 54, 0),
+    K([15.9, EYE, dz], [20.5, 1.4, dz], 54, 0),
+    K([18.6, EYE, dz], [23.5, 0.9, -1.4], 54, 0),
+    K([21.5, 1.3, -2.4], [25.0, 0.6, 0.5], 54, 0),
+    K([25.6, 1.0, 1.2], [14.0, 2.6, -3.2], 52, 70, ['-0.60', 'Der Garten', 'Das Haus von Süden']),
+    K([21.2, 1.4, -2.4], [14.0, 2.0, -2.8], 54, 0),
+    K([18.4, EYE, dz], [12.0, 1.8, -2.6], 54, 0),
+    K([15.4, EYE, -2.6], [12.6, 1.9, -6.0], 54, 0),
+    K([14.2, 1.85, 9.0], [12.2, 2.2, -3.8], 50, 40, ['±0.00', 'Zurück durch den Schnitt', 'Das Haus öffnet sich wieder bei A-A']),
     { p: se.p, t: se.t, fov: F.end.fov, rest: 0 },
   ];
 }
@@ -217,14 +226,14 @@ function chapters() {
   document.getElementById('track').style.height = `${(CH.end[1] + 1) * 100}vh`;
 }
 const SCAN1 = -60;
-// Single C1-continuous forward scan trajectory from x = 25.5 across the house (to 3.4) and out through the hill (-60)
+// Single C1-continuous forward scan trajectory from x = 24 across the house (to 4.4) and out over the forecourt (-60)
 function forwardScanX(sp) {
   if (sp <= 0) return 40;
   if (sp >= 1) return SCAN1;
-  if (sp <= 0.82) return lerp(25.5, 3.4, eInCont(sp / 0.82));
+  if (sp <= 0.82) return lerp(24.0, 4.4, eInCont(sp / 0.82));
   const t = (sp - 0.82) / 0.18;
-  // C1 slope match at sp = 0.82: d/dt = -22.1 * 0.7 * (0.18 / 0.82) = -3.40
-  return 3.4 - 3.4 * t - 60.0 * t * t;
+  // C1 slope match at sp = 0.82: d/dt = -19.6 * 0.7 * (0.18 / 0.82) = -3.01
+  return 4.4 - 3.01 * t - 61.39 * t * t;
 }
 // everything the frame needs, from the scroll position y (in screen heights)
 function story(y) {
@@ -247,7 +256,7 @@ function story(y) {
     : S.chapter === 'rev' ? ramp(S.rev, 0, 0.05) * (1 - ramp(S.rev, 0.52, 0.08)) : 0;
   S.real = S.chapter === 'swing' ? S.scanIn > 0 : S.chapter === 'rev' ? S.rev < 0.62 : S.chapter !== 'end';
   // the sunbeams come in smoothly as the scan passes the south glass
-  S.shaft = S.chapter === 'end' ? 0 : eSine(ramp(18.4 - S.scanX, 0, 6));
+  S.shaft = S.chapter === 'end' ? 0 : eSine(ramp(GX + 0.2 - S.scanX, 0, 6));
   // the front half of the house, while the camera is inside or in the garden
   S.front = S.chapter === 'walk' && S.wv > WALK.inAt && S.wv < WALK.outAt;
   // the sheet (notes, title block): the swing parameter decides, so it comes back on the way out
@@ -256,8 +265,8 @@ function story(y) {
   S.sheet = 1 - eSine(ramp(swv, 0.45, 0.16));
   S.tb = 1 - eSine(ramp(swv, 0.48, 0.14));
   S.sunLines = S.chapter === 'walk' ? 0 : S.chapter === 'rev' || S.chapter === 'end'
-    ? Math.max(S.sheet, 0.5 * ramp(S.scanX - 18.6, 0, 4))
-    : lerp(1, 0.5, ramp(S.sw, 0.45, 0.3)) * (1 - ramp(18.6 - S.scanX, 0, 4));
+    ? Math.max(S.sheet, 0.5 * ramp(S.scanX - GX - 0.4, 0, 4))
+    : lerp(1, 0.5, ramp(S.sw, 0.45, 0.3)) * (1 - ramp(GX + 0.4 - S.scanX, 0, 4));
   return S;
 }
 
@@ -306,7 +315,7 @@ function buildNotes() {
   notes = [];
   const pt = F.portrait;
   const R = pt ? 7 : 10;
-  [['A', 3.85], ['B', 11.0], ['C', 18.25], ['D', 22.5]].forEach(([l, x], i) => {
+  [['A', 5.15], ['B', 9.67], ['C', 13.6], ['D', 17.0]].forEach(([l, x], i) => {
     const g = mk('g');
     const ln = mk('line', { stroke: INK, 'stroke-width': 0.5, 'stroke-dasharray': '14 4 2 4', opacity: 0.6 }, g);
     const bub = mk('g', {}, g);
@@ -316,13 +325,13 @@ function buildNotes() {
       const pl = eOut(ramp(b, 0.2 + i * 0.06, 0.75)), pb = eOut(ramp(b, 0.55 + i * 0.06, 0.35));
       const vis = S.sheet;
       if (vis <= 0.001) { g.setAttribute('opacity', 0); return; }
-      const top = P(x, pt ? 11.2 : 9.3), bot = P(x, -5.2);
+      const top = P(x, pt ? 9.6 : 8.6), bot = P(x, -3.0);
       set(ln, { x1: top[0], y1: top[1] + R, x2: lerp(top[0], bot[0], pl), y2: lerp(top[1] + R, bot[1], pl) });
       set(bub, { transform: `translate(${top[0].toFixed(1)} ${top[1].toFixed(1)}) scale(${(0.6 + 0.4 * pb).toFixed(3)})`, opacity: pb });
       set(g, { opacity: (pl > 0 ? 1 : 0) * vis });
     });
   });
-  const LV = [[8.0, '+8.00', 'Oberlicht'], [6.4, '+6.40', 'Dach'], [3.2, '+3.20', 'Arbeiten'], [0, '±0.00', 'Eingang'], [-3.2, '-3.20', 'Garten']];
+  const LV = [[6.4, '+6.40', 'Dach'], [3.1, '+3.10', 'Obergeschoss'], [0, '±0.00', 'Erdgeschoss'], [-0.6, '-0.60', 'Garten']];
   LV.forEach(([y, v, name], i) => {
     const g = mk('g');
     const ln = mk('line', { stroke: INK, 'stroke-width': 0.5 }, g);
@@ -341,8 +350,8 @@ function buildNotes() {
     });
   });
   // sun angles: they draw from the sun's side, stay through the swing, and hand over to the real beams in the sweep
-  [[15.1, 11.0, 8.8, 3.22, '21. MÄR  51°'], [21.4, 12.0, 18.3, 2.4, '21. JUN  72°'], [30.2, 11.6, 7.3, 0.02, '21. DEZ  27°']].forEach(([x0, y0, x1, y1, label], i) => {
-    const ln = mk('line', { stroke: ACC, 'stroke-width': 0.75, 'stroke-dasharray': '6 4' });
+  [[21.2, 10.45, 12.74, 0.02, '21. MÄR  51°'], [19.3, 11.2, 15.65, 0.02, '21. JUN  72°'], [31.0, 10.97, 9.5, 0.02, '21. DEZ  27°']].forEach(([x0, y0, x1, y1, label], i) => {
+    const ln = mk('line', { stroke: ACC_HI, 'stroke-width': 0.8, 'stroke-dasharray': '6 4' });
     const tx = mk('text', { class: 'sun' }); tx.textContent = label;
     notes.push((b, S) => {
       const vis = S.sunLines;
@@ -354,8 +363,8 @@ function buildNotes() {
       set(tx, { x: c[0] + (onEdge ? -4 : 6), y: c[1] - 7, 'text-anchor': onEdge ? 'end' : 'start', opacity: pl * S.sheet });
     });
   });
-  const dy = -6.2;
-  [[3.7, 11.0, '7.30'], [11.0, 18.3, '7.30'], [18.3, 22.5, '4.20']].forEach(([x0, x1, label], i) => {
+  const dy = -2.6;
+  [[5.0, 9.67, '4.67'], [9.67, 13.6, '3.93'], [13.6, 17.0, '3.40'], [17.0, 21.0, '4.00']].forEach(([x0, x1, label], i) => {
     const g = mk('g');
     const ln = mk('line', { stroke: INK, 'stroke-width': 0.6 }, g);
     const t0 = mk('line', { stroke: INK, 'stroke-width': 1.2 }, g), t1 = mk('line', { stroke: INK, 'stroke-width': 1.2 }, g);
@@ -372,9 +381,9 @@ function buildNotes() {
       set(g, { opacity: (p > 0 ? 1 : 0) * vis });
     });
   });
-  const RM = [[16.5, 1.85, 'WOHNEN'], [12.8, 4.42, 'OBERE LOUNGE'], [7.0, 4.42, 'ARBEITEN'], [12.1, -1.45, 'SCHLAFEN'], [9.0, -2.0, 'KAMIN'], [21.1, 2.35, 'TERRASSE'], [0.6, 0.42, 'OBERER HOF'], [24.0, -2.75, 'UNTERER GARTEN']];
+  const RM = [[14.9, 2.35, 'WOHNEN'], [10.7, 2.35, 'ESSEN'], [7.1, 2.35, 'KÜCHE'], [7.4, 5.2, 'SCHLAFEN'], [11.7, 5.2, 'GALERIE'], [15.4, 5.2, 'LUFTRAUM'], [19.0, 2.1, 'TERRASSE'], [1.4, 0.42, 'VORPLATZ'], [25.6, 0.2, 'GARTEN']];
   RM.forEach(([x, y, label], i) => {
-    if (pt && (label === 'OBERER HOF' || label === 'UNTERER GARTEN')) return;
+    if (pt && (label === 'VORPLATZ' || label === 'GARTEN' || label === 'LUFTRAUM')) return;
     const tx = mk('text', { class: 'room', 'text-anchor': 'middle' }); tx.textContent = label;
     notes.push((b, S) => {
       const vis = 1 - eSine(ramp(S.swv, 0.48, 0.1));
@@ -385,18 +394,18 @@ function buildNotes() {
   });
   // the scan plane, drawn as its outline in the world
   const sg = mk('g', { opacity: 0 });
-  const poly = mk('polygon', { fill: 'rgba(232,93,4,0.08)', stroke: ACC, 'stroke-width': 1.2 }, sg);
-  const knock = mk('rect', { fill: INK, stroke: ACC, 'stroke-width': 0.8, opacity: 0.94, rx: 0 }, sg);
+  const poly = mk('polygon', { fill: 'rgba(229,32,46,0.10)', stroke: ACC, 'stroke-width': 1.2 }, sg);
+  const knock = mk('rect', { fill: PLATE, stroke: ACC, 'stroke-width': 0.8, opacity: 0.94, rx: 0 }, sg);
   const st1 = mk('text', { class: 'sun' }, sg);
   st1.textContent = 'CAD-SCHNITTEBENE';
-  const st2 = mk('text', { class: 'sun', style: 'fill:#f2efe7' }, sg);
+  const st2 = mk('text', { class: 'sun', style: `fill:${INK}` }, sg);
   notes.push((b, S) => {
     const vis = S.scanLine * (S.chapter === 'rev' ? 0.6 : 1);
     if (vis <= 0.001 || S.scanX > 39 || S.scanX < -50) { sg.setAttribute('opacity', 0); return; }
     const x = S.scanX;
-    const c = [P(x, -6.4, -9.6), P(x, 8.9, -9.6), P(x, 8.9, 0.4), P(x, -6.4, 0.4)];
+    const c = [P(x, -2.2, -9.6), P(x, 7.9, -9.6), P(x, 7.9, 0.4), P(x, -2.2, 0.4)];
     set(poly, { points: c.map((q) => q.map((v) => v.toFixed(1)).join(',')).join(' ') });
-    const top = P(x, 9.4, 0.4);
+    const top = P(x, 8.4, 0.4);
     const tx = cl(top[0], 18, W - 188);
     const ty = cl(top[1], 86, H - 44);
     set(knock, { x: tx - 8, y: ty - 31, width: 150, height: 35 });
@@ -478,8 +487,8 @@ function hud(T, S) {
   el.room.style.transform = `translateY(${(8 * (1 - rv)).toFixed(1)}px)`;
 
   // Live CAD section radar updates
-  const camX = S.chapter === 'walk' ? cl(cam.position.x, 2.5, 28.5) : 13.5;
-  const camY = S.chapter === 'walk' ? cl(cam.position.y, -2.6, 6.2) : 1.6;
+  const camX = S.chapter === 'walk' ? cl(cam.position.x, 2.5, 28.5) : 11.5;
+  const camY = S.chapter === 'walk' ? cl(cam.position.y, -0.2, 6.2) : 1.6;
   if (el.cadMap) {
     const mapVis = eOut(ramp(b, 1.8, 0.6)) * cl(1 - S.tb * 1.8) * (1 - ramp(S.end, 0.2, 0.4));
     op(el.cadMap, mapVis);
@@ -579,6 +588,30 @@ window.__checkPath = () => {
     }
   }
   return hits;
+};
+// the camera path against everything that is on screen at that moment (walls, glass, furniture, people, plants, the
+// ground): the exact distance from the eye to the nearest surface, every half metre of the walk
+window.__clear = (warn = 0.3, step = 0.5) => {
+  const tri = new THREE.Triangle(), c = new THREE.Vector3(), q = new THREE.Vector3();
+  const boxes = pieces.map((P) => { const b = new THREE.Box3(); for (let i = 0; i < P.pos.length; i += 3) b.expandByPoint(q.set(P.pos[i], P.pos[i + 1], P.pos[i + 2])); return b; });
+  const near = []; let worst = { d: 99 };
+  for (let v = WALK.V[1]; v <= WALK.L; v += step) {
+    const p = walkPose(v).p, front = v > WALK.inAt && v < WALK.outAt; let min = 99, hit = null;
+    for (let k = 0; k < pieces.length; k++) {
+      const P = pieces[k];
+      if (P.part === 'front' && !front) continue;
+      if (boxes[k].distanceToPoint(p) > Math.min(min, 1)) continue;
+      for (let i = 0; i < P.pos.length; i += 9) {
+        tri.a.set(P.pos[i], P.pos[i + 1], P.pos[i + 2]); tri.b.set(P.pos[i + 3], P.pos[i + 4], P.pos[i + 5]); tri.c.set(P.pos[i + 6], P.pos[i + 7], P.pos[i + 8]);
+        const d = tri.closestPointToPoint(p, c).distanceTo(p);
+        if (d < min) { min = d; hit = { mat: P.mat, kind: P.kind, at: c.toArray().map((n) => +n.toFixed(2)) }; }
+      }
+    }
+    const r = { y: +(CH.swing[1] + v / 100).toFixed(2), p: p.toArray().map((n) => +n.toFixed(2)), d: +min.toFixed(3), ...hit };
+    if (min < worst.d) worst = r;
+    if (min < warn && (!near.length || near[near.length - 1].mat !== r.mat || r.y - near[near.length - 1].y > 0.05)) near.push(r);
+  }
+  return { worst, near };
 };
 window.__bench = (n = 60, y0 = 0, y1 = total()) => {
   const gl = renderer.getContext(), px = new Uint8Array(4);

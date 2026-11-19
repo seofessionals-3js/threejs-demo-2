@@ -386,7 +386,7 @@ export function createLook(renderer, sectionBoxes = []) {
   for (const k of ['art1', 'art2', 'art3', 'art4', 'artSection']) { T[k].wrapS = T[k].wrapT = THREE.ClampToEdgeWrapping; }
 
   const skyCanvas = document.createElement('canvas'); skyCanvas.width = 4; skyCanvas.height = 512;
-  { const g = skyCanvas.getContext('2d'), gr = g.createLinearGradient(0, 0, 0, 512); for (const [t, col] of [[0, '#7ea0bd'], [0.40, '#c8ceca'], [0.5, '#f6e3c6'], [0.54, '#c2b5a0'], [1, '#948774']]) gr.addColorStop(t, col); g.fillStyle = gr; g.fillRect(0, 0, 4, 512); }
+  { const g = skyCanvas.getContext('2d'), gr = g.createLinearGradient(0, 0, 0, 512); for (const [t, col] of [[0, '#4a4a50'], [0.40, '#34343a'], [0.5, '#56565c'], [0.54, '#202024'], [1, '#121214']]) gr.addColorStop(t, col); g.fillStyle = gr; g.fillRect(0, 0, 4, 512); }
   const envScene = new THREE.Scene();
   const domeTex = new THREE.CanvasTexture(skyCanvas); domeTex.colorSpace = THREE.SRGBColorSpace;
   envScene.add(new THREE.Mesh(new THREE.SphereGeometry(50, 32, 16), new THREE.MeshBasicMaterial({ map: domeTex, side: THREE.BackSide })));
@@ -396,68 +396,68 @@ export function createLook(renderer, sectionBoxes = []) {
     m.position.set(...pos); m.lookAt(...look); envScene.add(m);
   };
   addEnvCard(28, 18, [36, 18, 12], [0, 0, 0], 0xffffff);
-  addEnvCard(24, 14, [-24, 20, 26], [0, 0, 0], 0xfff3de);
-  addEnvCard(30, 10, [0, 32, -16], [0, 0, 0], 0xf7efe2);
+  addEnvCard(24, 14, [-24, 20, 26], [0, 0, 0], 0xf4f1ee);
+  addEnvCard(30, 10, [0, 32, -16], [0, 0, 0], 0xeeeeee);
   const env = new THREE.PMREMGenerator(renderer).fromScene(envScene, 0.02).texture;
   const std = (o) => new THREE.MeshStandardMaterial(Object.assign({ roughness: 0.82, metalness: 0, envMap: env, envMapIntensity: 0.62 }, o));
   const M = {
-    conc: std({ map: T.conc, bumpMap: concBump, bumpScale: 0.028, roughness: 0.68, envMapIntensity: 0.68 }),
-    plaster: std({ map: T.plaster, bumpMap: plasterBump, bumpScale: 0.012, color: 0xf7f4ee, roughness: 0.74, envMapIntensity: 0.78 }),
-    ceiling: std({ map: T.plaster, bumpMap: plasterBump, bumpScale: 0.008, color: 0xfaf7f2, roughness: 0.82, envMapIntensity: 0.85, emissive: 0xf3eadc, emissiveIntensity: 0.34 }),
+    conc: std({ map: T.conc, bumpMap: concBump, bumpScale: 0.028, color: 0x8c8c92, roughness: 0.68, envMapIntensity: 0.6 }),
+    plaster: std({ map: T.plaster, bumpMap: plasterBump, bumpScale: 0.012, color: 0x5c5c62, roughness: 0.74, envMapIntensity: 0.6 }),
+    ceiling: std({ map: T.plaster, bumpMap: plasterBump, bumpScale: 0.008, color: 0x66666c, roughness: 0.82, envMapIntensity: 0.6, emissive: 0x1c1c20, emissiveIntensity: 0.34 }),
     walnutDoors: std({ map: T.walnutDoors, bumpMap: T.walnutBump, bumpScale: 0.022, roughness: 0.28, envMapIntensity: 0.88 }),
     curtain: std({ map: T.curtain, bumpMap: fabricBump, bumpScale: 0.018, roughness: 0.84, envMapIntensity: 0.52, side: THREE.DoubleSide }),
-    fire: std({ color: 0xff9436, emissive: 0xff5a12, emissiveIntensity: 2.2 }),
+    fire: std({ color: 0xff4a30, emissive: 0xff2410, emissiveIntensity: 2.4 }),
     brass: std({ color: 0xcfa862, metalness: 0.92, roughness: 0.2, envMapIntensity: 1.25 }),
     ceramicDark: std({ color: 0x2e2b28, roughness: 0.22, envMapIntensity: 0.85 }),
     artSection: std({ map: T.artSection, roughness: 0.75 }),
-    floorL: std({ map: T.oak, bumpMap: T.oakBump, bumpScale: 0.036, roughness: 0.32, color: 0xead8c0, envMapIntensity: 0.88 }),
-    oak: std({ map: T.oak, bumpMap: T.oakBump, bumpScale: 0.032, roughness: 0.30, envMapIntensity: 0.90 }),
-    oakFurn: std({ map: T.oakV, bumpMap: T.oakFurnBump, bumpScale: 0.020, roughness: 0.32, envMapIntensity: 0.82 }),
+    floorL: std({ map: T.oak, bumpMap: T.oakBump, bumpScale: 0.036, roughness: 0.32, color: 0x7c7c80, envMapIntensity: 0.8 }),
+    oak: std({ map: T.oak, bumpMap: T.oakBump, bumpScale: 0.032, color: 0x77777b, roughness: 0.30, envMapIntensity: 0.8 }),
+    oakFurn: std({ map: T.oakV, bumpMap: T.oakFurnBump, bumpScale: 0.020, color: 0xa2a2a6, roughness: 0.32, envMapIntensity: 0.82 }),
     walnut: std({ map: T.walnutV, bumpMap: T.walnutBump, bumpScale: 0.022, roughness: 0.28, envMapIntensity: 0.88 }),
-    teak: std({ map: T.teak, bumpMap: T.oakFurnBump, bumpScale: 0.020, roughness: 0.54, envMapIntensity: 0.65 }),
+    teak: std({ map: T.teak, bumpMap: T.oakFurnBump, bumpScale: 0.020, color: 0x9a9a9e, roughness: 0.54, envMapIntensity: 0.65 }),
     stoneFloor: std({ map: T.stoneFloor, bumpMap: stoneBump, bumpScale: 0.024, roughness: 0.48, envMapIntensity: 0.62 }),
-    gravel: std({ color: 0x8f8a82, bumpMap: stoneBump, bumpScale: 0.025, roughness: 0.92 }),
-    pave: std({ map: T.pave, bumpMap: stoneBump, bumpScale: 0.022, roughness: 0.66, envMapIntensity: 0.55 }),
-    grass: std({ map: T.grass, bumpMap: fabricBump, bumpScale: 0.024, roughness: 0.86, envMapIntensity: 0.32 }),
-    earthCut: std({ map: T.earth, bumpMap: stoneBump, bumpScale: 0.028, color: 0xbec3c7, roughness: 0.76, envMapIntensity: 0.45 }),
+    gravel: std({ color: 0x4c4c50, bumpMap: stoneBump, bumpScale: 0.025, roughness: 0.92 }),
+    pave: std({ map: T.pave, bumpMap: stoneBump, bumpScale: 0.022, color: 0x7a7a7e, roughness: 0.66, envMapIntensity: 0.55 }),
+    grass: std({ map: T.grass, bumpMap: fabricBump, bumpScale: 0.024, color: 0x6a6a6a, roughness: 0.86, envMapIntensity: 0.32 }),
+    earthCut: std({ map: T.earth, bumpMap: stoneBump, bumpScale: 0.028, color: 0x5a5c60, roughness: 0.76, envMapIntensity: 0.45 }),
     steel: std({ color: 0x222220, metalness: 0.74, roughness: 0.30, envMapIntensity: 0.92 }),
     blackSteel: std({ color: 0x181817, metalness: 0.68, roughness: 0.32, envMapIntensity: 0.88 }),
-    glass: new THREE.MeshBasicMaterial({ color: 0xd4e5e4, transparent: true, opacity: 0.17, envMap: env, reflectivity: 0.52, combine: THREE.MixOperation, depthWrite: false }),
+    glass: new THREE.MeshBasicMaterial({ color: 0xdfe6ea, transparent: true, opacity: 0.13, envMap: env, reflectivity: 0.52, combine: THREE.MixOperation, depthWrite: false }),
     marble: std({ map: T.marble, bumpMap: stoneBump, bumpScale: 0.009, roughness: 0.16, envMapIntensity: 1.05 }),
     travertine: std({ map: T.travertine, bumpMap: stoneBump, bumpScale: 0.024, roughness: 0.38, envMapIntensity: 0.80 }),
     boucle: std({ map: T.boucle, bumpMap: fabricBump, bumpScale: 0.028, roughness: 0.88, envMapIntensity: 0.45 }),
     linen: std({ map: T.linen, bumpMap: fabricBump, bumpScale: 0.018, roughness: 0.86, envMapIntensity: 0.45 }),
     duvet: std({ map: T.duvet, bumpMap: fabricBump, bumpScale: 0.018, roughness: 0.86, envMapIntensity: 0.45 }),
     linenOut: std({ map: T.linen, bumpMap: fabricBump, bumpScale: 0.018, roughness: 0.88, color: 0xeae4d8 }),
-    rug: std({ map: T.rug, bumpMap: rugBump, bumpScale: 0.048, roughness: 0.92 }),
+    rug: std({ map: T.rug, bumpMap: rugBump, bumpScale: 0.048, color: 0xa4a4a4, roughness: 0.92 }),
     rugDark: std({ map: T.rugDark, bumpMap: rugBump, bumpScale: 0.048, roughness: 0.92 }),
     headboard: std({ map: T.headboard, bumpMap: fabricBump, bumpScale: 0.026, roughness: 0.88 }),
-    leather: std({ color: 0x764528, bumpMap: stoneBump, bumpScale: 0.012, roughness: 0.34, envMapIntensity: 0.85 }),
-    cognac: std({ color: 0x91532b, bumpMap: stoneBump, bumpScale: 0.012, roughness: 0.32, envMapIntensity: 0.88 }),
-    cushionRust: std({ map: T.boucle, bumpMap: fabricBump, bumpScale: 0.024, color: 0xc65a32, roughness: 0.88 }),
-    cushionSage: std({ map: T.boucle, bumpMap: fabricBump, bumpScale: 0.024, color: 0x8f9a7c, roughness: 0.88 }),
-    throwOchre: std({ map: T.linen, bumpMap: fabricBump, bumpScale: 0.020, color: 0xcca446, roughness: 0.86 }),
+    leather: std({ color: 0x8e1820, bumpMap: stoneBump, bumpScale: 0.012, roughness: 0.34, envMapIntensity: 0.85 }),
+    cognac: std({ color: 0xb81c27, bumpMap: stoneBump, bumpScale: 0.012, roughness: 0.32, envMapIntensity: 0.88 }),
+    cushionRust: std({ map: T.boucle, bumpMap: fabricBump, bumpScale: 0.024, color: 0xc8202b, roughness: 0.88 }),
+    cushionSage: std({ map: T.boucle, bumpMap: fabricBump, bumpScale: 0.024, color: 0x8e8e8e, roughness: 0.88 }),
+    throwOchre: std({ map: T.linen, bumpMap: fabricBump, bumpScale: 0.020, color: 0x3c3c40, roughness: 0.86 }),
     ceramic: std({ color: 0xded6c8, roughness: 0.2, envMapIntensity: 0.88 }),
     white: std({ color: 0xf6f4f0, roughness: 0.16, envMapIntensity: 0.88 }),
     mirror: std({ color: 0xffffff, metalness: 1, roughness: 0.02, envMapIntensity: 1.1 }),
-    terracotta: std({ color: 0xa86446, bumpMap: stoneBump, bumpScale: 0.016, roughness: 0.74, envMapIntensity: 0.48 }),
-    shade: std({ color: 0xfff3dc, emissive: 0xffcf8a, emissiveIntensity: 1.7, side: THREE.DoubleSide }),
-    opal: std({ color: 0xfff8ec, emissive: 0xffd9a0, emissiveIntensity: 2.3 }),
+    terracotta: std({ color: 0x2c2c30, bumpMap: stoneBump, bumpScale: 0.016, roughness: 0.74, envMapIntensity: 0.48 }),
+    shade: std({ color: 0xfff8f0, emissive: 0xfff0e2, emissiveIntensity: 1.7, side: THREE.DoubleSide }),
+    opal: std({ color: 0xfffaf4, emissive: 0xfff2e6, emissiveIntensity: 2.3 }),
     leaf: std({ color: 0x5f6e3c, roughness: 0.66, envMapIntensity: 0.48, flatShading: true }),
     leafDark: std({ color: 0x3f4d2a, roughness: 0.70, envMapIntensity: 0.44, flatShading: true }),
     olive: std({ color: 0x8b9670, roughness: 0.68, envMapIntensity: 0.48, flatShading: true }),
     bark: std({ color: 0x5d5246, bumpMap: fabricBump, bumpScale: 0.014, roughness: 0.82, envMapIntensity: 0.35 }),
-    figure: std({ color: 0xd5c5ae, roughness: 0.38, metalness: 0.06, envMapIntensity: 0.85 }),
-    poche: new THREE.MeshBasicMaterial({ color: 0x161513 }),
+    figure: std({ color: 0xe9e6e1, roughness: 0.38, metalness: 0.06, envMapIntensity: 0.85 }),
+    poche: new THREE.MeshBasicMaterial({ color: 0xebe8e3 }),
     art1: std({ map: T.art1, bumpMap: fabricBump, bumpScale: 0.014, roughness: 0.68, envMapIntensity: 0.6 }),
     art2: std({ map: T.art2, bumpMap: fabricBump, bumpScale: 0.010, roughness: 0.72, envMapIntensity: 0.55 }),
     art3: std({ map: T.art3, bumpMap: fabricBump, bumpScale: 0.012, roughness: 0.68, envMapIntensity: 0.62 }),
     art4: std({ map: T.art4, bumpMap: fabricBump, bumpScale: 0.012, roughness: 0.68, envMapIntensity: 0.62 }),
-    book0: std({ color: 0x8e3b2a, roughness: 0.55 }), book1: std({ color: 0x2f4a5a, roughness: 0.55 }), book2: std({ color: 0xd8cfb8, roughness: 0.6 }), book3: std({ color: 0x5c6b4a, roughness: 0.55 }), book4: std({ color: 0x1f1e1c, roughness: 0.5 }),
+    book0: std({ color: 0xc8202b, roughness: 0.55 }), book1: std({ color: 0x2f4a5a, roughness: 0.55 }), book2: std({ color: 0xd8cfb8, roughness: 0.6 }), book3: std({ color: 0x5c6b4a, roughness: 0.55 }), book4: std({ color: 0x1f1e1c, roughness: 0.5 }),
   };
   const c = document.createElement('canvas'); c.width = 4; c.height = 512; const g = c.getContext('2d');
   const gr = g.createLinearGradient(0, 0, 0, 512);
-  for (const [t, col] of [[0, '#7ea0bd'], [0.42, '#c8ceca'], [0.56, '#eedbc0'], [1, '#f0dcbc']]) gr.addColorStop(t, col);
+  for (const [t, col] of [[0, '#0a0a0c'], [0.42, '#0e0e11'], [0.56, '#17171b'], [1, '#17171b']]) gr.addColorStop(t, col);
   g.fillStyle = gr; g.fillRect(0, 0, 4, 512);
   const sky = new THREE.CanvasTexture(c); sky.colorSpace = THREE.SRGBColorSpace;
   return { M, T, env, sky };

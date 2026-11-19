@@ -1,8 +1,8 @@
-# seofessionals three.js Demo 2
+# three.js Demo 2
 
 Eine Schnittzeichnung eines Hauses am Hang. Beim Scrollen öffnet sich das Objektiv in die Tiefe, eine Scan-Ebene verwandelt die Tusche in beleuchtetes Material, und die gezeichneten Sonnenwinkel werden zu echten Sonnenstrahlen. Dann gehen Sie durch den Schnitt hinein, Raum für Raum, und kommen wieder heraus zur Zeichnung.
 
-[**Live ansehen**](https://seofessionals-3js.github.io/seofessionals-threejs-demo-2/) · [**Startprompt**](PROMPT.md) · [**Alle Demos**](https://seofessionals-3js.github.io/seofessionals-threejs-demos/)
+[**Live ansehen**](https://seofessionals-3js.github.io/threejs-demo-2/) · [**Startprompt**](PROMPT.md) · [**Alle Demos**](https://seofessionals-3js.github.io/threejs-demos/)
 
 ## So funktioniert es
 
@@ -30,6 +30,6 @@ Dann http://localhost:8000/ öffnen. Am besten auf einem Laptop mit aktuellem Br
 
 ## Herkunft und Lizenz
 
-Basiert auf „Section Sweep“ aus [flat-to-3d](https://github.com/Sam1983Aing/flat-to-3d) von Samnang Aing, veröffentlicht unter der MIT-Lizenz, und für seofessionals ins Deutsche übersetzt. Die Lizenz liegt unverändert in [LICENSE](LICENSE).
+Basiert auf „Section Sweep“ aus [flat-to-3d](https://github.com/Sam1983Aing/flat-to-3d) von Samnang Aing, veröffentlicht unter der MIT-Lizenz, und ins Deutsche übersetzt. Die Lizenz liegt unverändert in [LICENSE](LICENSE).
 
 Alle Büros, Häuser, Adressen und Kontaktdaten in der Demo sind erfunden. three.js (MIT) wird von einem CDN geladen, die Schriften Chakra Petch und IBM Plex Mono von Google Fonts (SIL Open Font License).

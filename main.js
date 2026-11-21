@@ -6,6 +6,7 @@ import { buildPieces, solids, CUT, GX, DOOR, ST0, ST1, OG } from './house.js';
 import { createDrawing } from './draw.js';
 import { createLook } from './look.js';
 import { createReal, SUN_DIR } from './real.js';
+import { tier, low, mid, governor, visible, pinnedDpr } from './quality.js';
 
 const Q = new URLSearchParams(location.search);
 const OFF = Q.has('offline');
@@ -18,16 +19,18 @@ const eExpo = (x) => (x >= 1 ? 1 : 1 - Math.pow(2, -10 * cl(x)));
 const eIO = (x) => { x = cl(x); return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2; };
 const eSine = (x) => 0.5 - 0.5 * Math.cos(Math.PI * cl(x));
 const V3 = (a) => new THREE.Vector3(a[0], a[1], a[2]);
-const INK = '#f1eeea', PAPER = '#0c0c0e', ACC = '#e5202e', ACC_HI = '#ff4d57', PLATE = '#141416';
+const INK = '#1b1c1e', PAPER = '#e9e7e0', ACC = '#e07a12', ACC_HI = '#e07a12', PLATE = '#f4f3ee';
 
 window.__mainOwns = true;
 window.__loader.p = 0.3;
 
-let W = Math.max(1, innerWidth), H = Math.max(1, innerHeight);
-const DPR = Math.min(Q.has('dpr') ? +Q.get('dpr') : devicePixelRatio, 2);
-const SMALL = Math.min(innerWidth, innerHeight) < 600 || matchMedia('(pointer: coarse)').matches;
-const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('gl'), antialias: false, powerPreference: 'high-performance' });
-renderer.setPixelRatio(DPR);
+// The canvas is as tall as the largest viewport (100lvh), so the URL bar of a phone sliding in and out changes neither
+// the size of the picture nor the scale of the scroll. W and H are that box, everything is projected into it.
+const glEl = document.getElementById('gl');
+const boxW = () => Math.max(1, glEl.clientWidth || innerWidth), boxH = () => Math.max(1, glEl.clientHeight || innerHeight);
+let W = boxW(), H = boxH();
+// every pass draws into a target and the screen only ever gets a full-screen triangle pair: no depth, no stencil, no MSAA
+const renderer = new THREE.WebGLRenderer({ canvas: glEl, antialias: false, depth: false, stencil: false, alpha: false, powerPreference: 'high-performance' });
 renderer.setSize(W, H, false);
 
 // ---------------------------------------------------------------- the camera
@@ -62,7 +65,7 @@ const eInCont = (x) => { x = cl(x); return x * x * (2.3 - 1.3 * x); };
 // framings: the hero (the flat sheet), the end of the dolly (f1), the section perspective the swing lands on
 const F = {};
 function frames() {
-  W = Math.max(1, innerWidth); H = Math.max(1, innerHeight);
+  W = boxW(); H = boxH();
   const asp = W / H;
   F.portrait = asp < 0.9;
   if (!F.portrait) {
@@ -118,8 +121,8 @@ function walkKeys() {
     K([6.62, EYE, -2.6], [6.4, 1.7, -7.4], 58, 0),
     K([6.5, EYE, -5.9], [9.8, 2.6, -7.2], 58, 0),
     K([6.35, EYE, -7.05], [9.5, 3.4, -7.1], 58, 0),
-    K([8.6, sy(8.6), -7.1], [11.6, 4.9, -7.0], 58, 0),
-    K([10.8, sy(10.8), -7.1], [12.8, 4.6, -6.0], 58, 0),
+    K([8.6, sy(8.6), -6.85], [11.6, 4.9, -6.75], 58, 0),
+    K([10.8, sy(10.8), -6.85], [12.8, 4.6, -6.0], 58, 0),
     K([12.7, up, -6.9], [12.6, 4.3, -2.6], 56, 0),
     K([12.3, up, -5.4], [12.6, 4.15, -1.2], 54, 55, ['+3.10', 'Die Galerie', 'Bücher, Schreibtisch, der Blick in den Luftraum']),
     K([13.05, up, -4.6], [16.4, 0.4, -3.9], 56, 55, ['+3.10', 'Über dem Wohnraum', 'Vom Rand der Galerie']),
@@ -130,10 +133,10 @@ function walkKeys() {
     K([10.6, up, -4.95], [12.6, 4.4, -6.2], 56, 0),
     K([12.3, up, -5.6], [12.2, 4.3, -7.4], 58, 0),
     K([12.75, up, -6.75], [10.0, 3.6, -7.2], 58, 0),
-    K([11.6, sy(11.6), -7.1], [8.6, 2.2, -7.1], 58, 0),
-    K([9.2, sy(9.2), -7.1], [6.4, 1.2, -6.9], 58, 0),
+    K([11.6, sy(11.6), -6.85], [8.6, 2.2, -6.8], 58, 0),
+    K([9.2, sy(9.2), -6.85], [6.4, 1.2, -6.7], 58, 0),
     K([6.6, EYE, -7.0], [6.4, 1.5, -4.0], 58, 0),
-    K([6.6, EYE, -5.6], [8.6, 1.3, -3.0], 56, 0),
+    K([6.45, EYE, -5.5], [6.9, 1.5, -1.6], 56, 0),
     K([7.0, EYE, -1.35], [11.4, 1.15, -3.9], 54, 55, ['±0.00', 'Küche & Essen', 'Kochinsel, Tisch für sechs, drei Kugelleuchten']),
     K([9.6, EYE, -1.5], [14.4, 1.4, -3.2], 54, 0),
     K([13.8, EYE, -1.7], [17.6, 1.5, dz], 54, 0),
@@ -278,24 +281,35 @@ const ACC_COL = new THREE.Color(ACC);
 window.__loader.p = 0.5;
 await new Promise((r) => setTimeout(r, 20));
 const look = createLook(renderer, solids().filter((b) => b[2] < CUT && b[5] > CUT && b[6] !== 'glass'));
-const real = createReal(renderer, look, pieces, cam, { ao: !SMALL && !Q.has('noao'), shadowSize: SMALL ? 2048 : 4096 });
+// what a device class gets: ambient occlusion only on desktop, a smaller static shadow map, fewer steps and pixels for
+// the sunbeams, fewer lamps (see quality.js for the tiers: low is a phone such as a Galaxy A51)
+const real = createReal(renderer, look, pieces, cam, {
+  solid: Q.has('nopre') ? null : drawing.parts,
+  ...(low ? { ao: false, shadowSize: 1536, sunSize: 512, shaftSteps: 10, shaftDiv: 3, lamps: 4 }
+    : mid ? { ao: false, shadowSize: 2048, sunSize: 1024, shaftSteps: 16, shaftDiv: 2, lamps: 6 }
+      : { ao: !Q.has('noao'), shadowSize: 4096, sunSize: 1024, shaftSteps: 22, shaftDiv: 2, lamps: 10 }),
+});
 window.__loader.p = 0.7;
-// the lit house renders below the drawing's resolution (the ink stays sharp at full resolution on top): 1.2x on a retina screen
-const REAL_SCALE = Q.has('rs') ? +Q.get('rs') : SMALL ? 0.6 : DPR >= 2 ? 0.6 : 0.75;
-function sizes() {
-  frames();
+// the lit house renders below the drawing's resolution (the ink stays sharp at full resolution on top)
+const realScale = (dpr) => (Q.has('rs') ? +Q.get('rs') : low ? 0.75 : mid ? 0.7 : dpr >= 1.75 ? 0.65 : 1);
+function sizesGL() {
   renderer.setSize(W, H, false);
   const s = drawing.resize();
-  real.resize(s.x, s.y, REAL_SCALE);
-  buildWalk(); chapters();
+  real.resize(s.x, s.y, realScale(renderer.getPixelRatio()));
 }
-sizes();
+// the resolution follows the frame time (quality.js): it starts from a pixel budget and steps down when frames run slow
+let dirty = true;
+const gov = governor({ apply: (dpr) => { renderer.setPixelRatio(dpr); sizesGL(); dirty = true; } });
+frames(); buildWalk(); chapters();
 
 // ---------------------------------------------------------------- the notes on the sheet (SVG, projected from the world every frame)
 const NS = 'http://www.w3.org/2000/svg';
 const svg = document.getElementById('ov');
 const mk = (tag, a = {}, parent = svg) => { const e = document.createElementNS(NS, tag); for (const k in a) e.setAttribute(k, a[k]); parent.appendChild(e); return e; };
-const set = (e, a) => { for (const k in a) e.setAttribute(k, typeof a[k] === 'number' ? +a[k].toFixed(2) : a[k]); };
+// attributes and styles are only written when their value changed: most of them stand still for most of the page
+const set = (e, a) => { const c = e.__a || (e.__a = {}); for (const k in a) { const v = typeof a[k] === 'number' ? String(+a[k].toFixed(2)) : String(a[k]); if (c[k] !== v) { c[k] = v; e.setAttribute(k, v); } } };
+const sty = (e, k, v) => { const c = e.__s || (e.__s = {}); if (c[k] !== v) { c[k] = v; e.style[k] = v; } };
+const txt = (e, v) => { if (e.__t !== v) { e.__t = v; e.textContent = v; } };
 const v3 = new THREE.Vector3();
 const P = (x, y, z = 0) => { v3.set(x, y, z).project(cam); return [((v3.x + 1) / 2) * W, ((1 - v3.y) / 2) * H]; };
 let notes = [];
@@ -324,7 +338,7 @@ function buildNotes() {
     notes.push((b, S) => {
       const pl = eOut(ramp(b, 0.2 + i * 0.06, 0.75)), pb = eOut(ramp(b, 0.55 + i * 0.06, 0.35));
       const vis = S.sheet;
-      if (vis <= 0.001) { g.setAttribute('opacity', 0); return; }
+      if (vis <= 0.001) { set(g, { opacity: 0 }); return; }
       const top = P(x, pt ? 9.6 : 8.6), bot = P(x, -3.0);
       set(ln, { x1: top[0], y1: top[1] + R, x2: lerp(top[0], bot[0], pl), y2: lerp(top[1] + R, bot[1], pl) });
       set(bub, { transform: `translate(${top[0].toFixed(1)} ${top[1].toFixed(1)}) scale(${(0.6 + 0.4 * pb).toFixed(3)})`, opacity: pb });
@@ -339,13 +353,13 @@ function buildNotes() {
     const tx = mk('text', F.levels.short ? { 'text-anchor': 'end' } : {}, g); tx.textContent = F.levels.short ? v : `${v}  ${name.toUpperCase()}`;
     notes.push((b, S) => {
       const vis = S.sheet;
-      if (vis <= 0.001) { g.setAttribute('opacity', 0); return; }
+      if (vis <= 0.001) { set(g, { opacity: 0 }); return; }
       const pl = eOut(ramp(b, 1.45 + i * 0.07, 0.45)), pt2 = eOut(ramp(b, 1.7 + i * 0.07, 0.3));
       const a = P(F.levels.x0, y), e = P(F.levels.x1, y);
       set(ln, { x1: a[0], y1: a[1], x2: lerp(a[0], e[0], pl), y2: lerp(a[1], e[1], pl) });
       const k = pt ? 0.65 : 1;
       set(tri, { d: `M${e[0].toFixed(1)} ${e[1].toFixed(1)} l${-5 * k} ${-8 * k} h${10 * k} z`, opacity: pt2 });
-      if (F.levels.short) set(tx, { x: e[0] - 5, y: e[1] - 4, opacity: pt2 }); else set(tx, { x: e[0] + 10, y: e[1] - 3, opacity: pt2 });
+      if (F.levels.short) set(tx, { x: Math.min(e[0] - 5, W - 10), y: e[1] - 4, opacity: pt2 }); else set(tx, { x: e[0] + 10, y: e[1] - 3, opacity: pt2 });
       set(g, { opacity: (pl > 0 ? 1 : 0) * vis });
     });
   });
@@ -355,12 +369,13 @@ function buildNotes() {
     const tx = mk('text', { class: 'sun' }); tx.textContent = label;
     notes.push((b, S) => {
       const vis = S.sunLines;
-      if (vis <= 0.001) { ln.setAttribute('opacity', 0); tx.setAttribute('opacity', 0); return; }
+      if (vis <= 0.001) { set(ln, { opacity: 0 }); set(tx, { opacity: 0 }); return; }
       const p = eIO(ramp(b, 1.85 + i * 0.16, 0.8)), pl = ramp(b, 2.45 + i * 0.16, 0.3);
       const A = P(x0, y0), B = P(x1, y1);
       set(ln, { x1: A[0], y1: A[1], x2: lerp(A[0], B[0], p), y2: lerp(A[1], B[1], p), opacity: (p > 0 ? 1 : 0) * vis });
       const c = clipStart(A, B, pt ? 12 : 24), onEdge = c[2] > 0.001;
-      set(tx, { x: c[0] + (onEdge ? -4 : 6), y: c[1] - 7, 'text-anchor': onEdge ? 'end' : 'start', opacity: pl * S.sheet });
+      const tw = pt ? 66 : 96, flip = onEdge || c[0] + 6 + tw > W - 8;
+      set(tx, { x: Math.min(c[0] + (flip ? -4 : 6), W - 10), y: c[1] - 7, 'text-anchor': flip ? 'end' : 'start', opacity: pl * S.sheet });
     });
   });
   const dy = -2.6;
@@ -371,7 +386,7 @@ function buildNotes() {
     const tx = mk('text', { 'text-anchor': 'middle' }, g); tx.textContent = label;
     notes.push((b, S) => {
       const vis = S.sheet;
-      if (vis <= 0.001) { g.setAttribute('opacity', 0); return; }
+      if (vis <= 0.001) { set(g, { opacity: 0 }); return; }
       const p = eOut(ramp(b, 2.0 + i * 0.12, 0.5)), q = ramp(b, 2.3 + i * 0.12, 0.3);
       const A = P(x0, dy), B = P(x1, dy), E = [lerp(A[0], B[0], p), lerp(A[1], B[1], p)];
       set(ln, { x1: A[0], y1: A[1], x2: E[0], y2: E[1] });
@@ -387,21 +402,21 @@ function buildNotes() {
     const tx = mk('text', { class: 'room', 'text-anchor': 'middle' }); tx.textContent = label;
     notes.push((b, S) => {
       const vis = 1 - eSine(ramp(S.swv, 0.48, 0.1));
-      if (vis <= 0.001) { tx.setAttribute('opacity', 0); return; }
+      if (vis <= 0.001) { set(tx, { opacity: 0 }); return; }
       const p = eOut(ramp(b, 2.15 + i * 0.05, 0.45)), A = P(x, y);
       set(tx, { x: A[0], y: A[1] + (1 - p) * 5, opacity: p * vis });
     });
   });
   // the scan plane, drawn as its outline in the world
   const sg = mk('g', { opacity: 0 });
-  const poly = mk('polygon', { fill: 'rgba(229,32,46,0.10)', stroke: ACC, 'stroke-width': 1.2 }, sg);
+  const poly = mk('polygon', { fill: 'rgba(224,122,18,0.12)', stroke: ACC, 'stroke-width': 1.2 }, sg);
   const knock = mk('rect', { fill: PLATE, stroke: ACC, 'stroke-width': 0.8, opacity: 0.94, rx: 0 }, sg);
   const st1 = mk('text', { class: 'sun' }, sg);
   st1.textContent = 'CAD-SCHNITTEBENE';
   const st2 = mk('text', { class: 'sun', style: `fill:${INK}` }, sg);
   notes.push((b, S) => {
     const vis = S.scanLine * (S.chapter === 'rev' ? 0.6 : 1);
-    if (vis <= 0.001 || S.scanX > 39 || S.scanX < -50) { sg.setAttribute('opacity', 0); return; }
+    if (vis <= 0.001 || S.scanX > 39 || S.scanX < -50) { set(sg, { opacity: 0 }); return; }
     const x = S.scanX;
     const c = [P(x, -2.2, -9.6), P(x, 7.9, -9.6), P(x, 7.9, 0.4), P(x, -2.2, 0.4)];
     set(poly, { points: c.map((q) => q.map((v) => v.toFixed(1)).join(',')).join(' ') });
@@ -409,7 +424,7 @@ function buildNotes() {
     const tx = cl(top[0], 18, W - 188);
     const ty = cl(top[1], 86, H - 44);
     set(knock, { x: tx - 8, y: ty - 31, width: 150, height: 35 });
-    set(st1, { x: tx, y: ty - 17 }); set(st2, { x: tx, y: ty - 4 }); st2.textContent = `X = ${x.toFixed(2)} M`;
+    set(st1, { x: tx, y: ty - 17 }); set(st2, { x: tx, y: ty - 4 }); txt(st2, `X = ${x.toFixed(2)} M`);
     set(sg, { opacity: vis });
   });
 }
@@ -420,15 +435,15 @@ const el = { brand: $('.brand'), cta: $('.cta'), lines: [...document.querySelect
   tb: $('#tb'), frame: $('#tb .frame'), fades: [...document.querySelectorAll('#tb .fade')], t1: $('#tb .t1'), scale: $('#tb .scale'), kp: $('#kp'),
   room: $('.room'), stamp: $('#tb .stamp'), rlv: $('.room .lv'), rname: $('.room b'), rnote: $('.room .nt'), end: $('.end'), endLines: [...document.querySelectorAll('.end .ln > span')], endSub: $('.end .sub2'), endBtn: $('.end .btn'),
   cadMap: $('#cad-map'), cmLbl: $('#cm-lbl'), cmScan: $('#cm-scan'), cmDot: $('#cm-dot'), cmCone: $('#cm-cone'), cmZones: [...document.querySelectorAll('#cad-map .cm-zone')] };
-let tbMode = 0, tbSwap = -9, hintMode = -1, hintSwap = -9, roomKey = '', roomSwap = -9, hoverTag = '';
-const op = (e, v) => { if (e) e.style.opacity = (+v).toFixed(3); };
+let tbMode = 0, tbSwap = -9, roomKey = '', hoverTag = '', poke = false;
+const op = (e, v) => { if (e) sty(e, 'opacity', (+v).toFixed(3)); };
 
 // Interactive CAD radar room jump targets
 function jumpToStop(stopName, smooth = true) {
   for (const g of WALK.stops) {
     if (g.label[1] === stopName) {
       const targetY = CH.swing[1] + g.v / 100;
-      window.scrollTo({ top: targetY * innerHeight, behavior: smooth && !REDUCED ? 'smooth' : 'auto' });
+      window.scrollTo({ top: targetY * H, behavior: smooth && !REDUCED ? 'smooth' : 'auto' });
       return targetY;
     }
   }
@@ -436,8 +451,8 @@ function jumpToStop(stopName, smooth = true) {
 }
 window.__jumpTo = jumpToStop;
 el.cmZones.forEach((z) => {
-  z.addEventListener('mouseenter', () => { hoverTag = z.dataset.tag || ''; });
-  z.addEventListener('mouseleave', () => { hoverTag = ''; });
+  z.addEventListener('mouseenter', () => { hoverTag = z.dataset.tag || ''; poke = true; });
+  z.addEventListener('mouseleave', () => { hoverTag = ''; poke = true; });
   z.addEventListener('click', (e) => { e.stopPropagation(); jumpToStop(z.dataset.stop); });
 });
 
@@ -446,30 +461,32 @@ function hud(T, S) {
   op(el.brand, eOut(ramp(b, 0.1, 0.6)));
   const endIn = S.chapter === 'end' ? 1 : S.chapter === 'rev' ? ramp(S.rev, 0.86, 0.14) : 0;
   op(el.cta, eOut(ramp(b, 0.2, 0.6)) * (1 - ramp(endIn, 0, 0.25)));
-  el.stamp.style.opacity = eOut(ramp(endIn, 0.55, 0.3)).toFixed(3);
-  el.stamp.style.transform = `rotate(-8deg) scale(${(1.25 - 0.25 * eOut(ramp(endIn, 0.55, 0.3))).toFixed(3)})`;
+  op(el.stamp, eOut(ramp(endIn, 0.55, 0.3)));
+  sty(el.stamp, 'transform', `rotate(-8deg) scale(${(1.25 - 0.25 * eOut(ramp(endIn, 0.55, 0.3))).toFixed(3)})`);
   // the headline: each line slides up out of its own mask, and leaves as the scroll starts
   const out = S.chapter === 'swing' ? eIO(ramp(S.sw, 0, 0.1)) : 1;
   el.lines.forEach((ln, i) => {
     const s = eExpo(ramp(b, 0.45 + i * 0.17, 1.0));
-    ln.style.transform = `translateY(${(125 * (1 - s)).toFixed(2)}%)`;
-    ln.style.opacity = s > 0.005 ? '1' : '0';
+    sty(ln, 'transform', `translateY(${(125 * (1 - s)).toFixed(2)}%)`);
+    sty(ln, 'opacity', s > 0.005 ? '1' : '0');
   });
-  el.head.style.transform = `translateY(${(-26 * out).toFixed(1)}px)`; op(el.head, b > 0.44 ? 1 - out : 0);
-  el.sub.style.transform = `translateY(${(10 * (1 - eOut(ramp(b, 1.15, 0.6))) - 26 * out).toFixed(1)}px)`;
+  sty(el.head, 'transform', `translateY(${(-26 * out).toFixed(1)}px)`); op(el.head, b > 0.44 ? 1 - out : 0);
+  sty(el.sub, 'transform', `translateY(${(10 * (1 - eOut(ramp(b, 1.15, 0.6))) - 26 * out).toFixed(1)}px)`);
   op(el.sub, eOut(ramp(b, 1.15, 0.6)) * (1 - out));
   // the lens readout: a 35 mm equivalent focal length (24 mm high frame)
   const fov = cam.userData.fov, mm = 12 / Math.tan((fov * Math.PI) / 360), flat = fov < 1.2;
-  el.chip.innerHTML = S.chapter === 'walk'
+  const chip = S.chapter === 'walk'
     ? `Augenhöhe ${EYE.toFixed(2)} m &nbsp;/&nbsp; Objektiv <b>${Math.round(mm)} mm</b>`
     : `A-A &nbsp;/&nbsp; Objektiv <b>${Math.round(mm).toLocaleString('de-DE')} mm</b> &nbsp;/&nbsp; ${flat ? '1:100' : 'Nicht maßstäblich'}`;
+  if (el.chip.__h !== chip) { el.chip.__h = chip; el.chip.innerHTML = chip; }
   op(el.chip, eOut(ramp(b, 2.5, 0.5)) * (1 - ramp(S.end, 0.2, 0.4)));
   // the hint at the start of the page
   const hv = S.chapter === 'swing' ? eOut(ramp(b, 2.8, 0.5)) * (1 - ramp(S.sw, 0, 0.06)) : 0;
   op(el.hint, hv);
-  el.hint.style.transform = `translate(-50%, ${REDUCED ? 0 : (Math.sin(T * 2.2) * 2.5).toFixed(2)}px)`;
+  const bob = hv > 0.01 && !REDUCED;   // the hint bobs as a CSS animation, so a page at rest runs no script for it
+  if (el.hint.__bob !== bob) { el.hint.__bob = bob; el.hint.classList.toggle('bob', bob); }
   // the title block: draws its frame, then its text. Its scale stops being true the moment the lens opens.
-  el.frame.style.clipPath = `inset(0 0 0 ${(100 * (1 - eIO(ramp(b, 0.55, 0.6)))).toFixed(2)}%)`;
+  sty(el.frame, 'clipPath', `inset(0 0 0 ${(100 * (1 - eIO(ramp(b, 0.55, 0.6)))).toFixed(2)}%)`);
   const m = flat ? 0 : 1;
   if (m !== tbMode) { tbMode = m; tbSwap = T; el.t1.textContent = m ? 'Schnittperspektive' : 'Schnitt A-A'; el.scale.textContent = m ? 'Nicht maßstäblich' : 'Maßstab 1:100'; }
   const swapK = OFF || S.tb > 0.8 ? 1 : ramp(T - tbSwap, 0, 0.35), tv = eOut(ramp(b, 0.9, 0.5));
@@ -482,9 +499,9 @@ function hud(T, S) {
     const v = eSine(ramp(S.wv, g.a, 24)) * (1 - eSine(ramp(S.wv, g.b - 24, 24)));
     if (v > rv) { rv = v; rk = g.label.join('|'); activeStop = g.label[1]; }
   }
-  if (rk && rk !== roomKey) { roomKey = rk; roomSwap = T; const [lv, name, note] = rk.split('|'); el.rlv.textContent = lv; el.rname.textContent = name; el.rnote.textContent = note; }
+  if (rk && rk !== roomKey) { roomKey = rk; const [lv, name, note] = rk.split('|'); el.rlv.textContent = lv; el.rname.textContent = name; el.rnote.textContent = note; }
   op(el.room, rv);
-  el.room.style.transform = `translateY(${(8 * (1 - rv)).toFixed(1)}px)`;
+  sty(el.room, 'transform', `translateY(${(8 * (1 - rv)).toFixed(1)}px)`);
 
   // Live CAD section radar updates
   const camX = S.chapter === 'walk' ? cl(cam.position.x, 2.5, 28.5) : 11.5;
@@ -492,12 +509,13 @@ function hud(T, S) {
   if (el.cadMap) {
     const mapVis = eOut(ramp(b, 1.8, 0.6)) * cl(1 - S.tb * 1.8) * (1 - ramp(S.end, 0.2, 0.4));
     op(el.cadMap, mapVis);
-    el.cadMap.classList.toggle('interactive', mapVis > 0.25);
-    el.cmLbl.textContent = hoverTag
+    const inter = mapVis > 0.25;
+    if (el.cadMap.__i !== inter) { el.cadMap.__i = inter; el.cadMap.classList.toggle('interactive', inter); }
+    txt(el.cmLbl, hoverTag
       ? `SPRUNG // ${hoverTag}`
       : S.chapter === 'walk'
         ? `POS X:${cam.position.x.toFixed(1)} Y:${cam.position.y.toFixed(1)}M`
-        : `SCAN X:${cl(S.scanX, -20, 30).toFixed(1)}M // ${Math.round(mm)}MM`;
+        : `SCAN X:${cl(S.scanX, -20, 30).toFixed(1)}M // ${Math.round(mm)}MM`);
     const sx = cl(S.scanX, 1.8, 28.2);
     set(el.cmScan, { x1: sx, x2: sx, opacity: S.scanLine > 0.01 ? 1 : 0.25 });
     set(el.cmDot, { cx: camX, cy: camY });
@@ -507,29 +525,33 @@ function hud(T, S) {
       const r = 3.8, sp = 0.38;
       const x1 = camX + Math.cos(ang - sp) * r, y1 = camY + Math.sin(ang - sp) * r;
       const x2 = camX + Math.cos(ang + sp) * r, y2 = camY + Math.sin(ang + sp) * r;
-      el.cmCone.setAttribute('points', `${camX.toFixed(2)},${camY.toFixed(2)} ${x1.toFixed(2)},${y1.toFixed(2)} ${x2.toFixed(2)},${y2.toFixed(2)}`);
+      set(el.cmCone, { points: `${camX.toFixed(2)},${camY.toFixed(2)} ${x1.toFixed(2)},${y1.toFixed(2)} ${x2.toFixed(2)},${y2.toFixed(2)}` });
       set(el.cmCone, { opacity: S.chapter === 'walk' ? 1 : 0 });
     }
-    el.cmZones.forEach((z) => z.classList.toggle('active', z.dataset.stop === activeStop));
+    if (el.cadMap.__stop !== activeStop) { el.cadMap.__stop = activeStop; el.cmZones.forEach((z) => z.classList.toggle('active', z.dataset.stop === activeStop)); }
   }
 
   // the end: the sheet is back, with the call to action
   const ev = S.chapter === 'end' ? 1 : S.chapter === 'rev' ? ramp(S.rev, 0.86, 0.14) : 0;
-  el.end.style.visibility = ev > 0 ? 'visible' : 'hidden';
-  el.endLines.forEach((ln, i) => { ln.style.transform = `translateY(${(110 * (1 - eOut(ramp(ev, 0.1 + i * 0.18, 0.6)))).toFixed(2)}%)`; });
+  sty(el.end, 'visibility', ev > 0 ? 'visible' : 'hidden');
+  el.endLines.forEach((ln, i) => { sty(ln, 'transform', `translateY(${(110 * (1 - eOut(ramp(ev, 0.1 + i * 0.18, 0.6)))).toFixed(2)}%)`); });
   op(el.endSub, eOut(ramp(ev, 0.45, 0.4))); op(el.endBtn, eOut(ramp(ev, 0.6, 0.4)));
-  el.endBtn.style.transform = `translateY(${(10 * (1 - eOut(ramp(ev, 0.6, 0.4)))).toFixed(1)}px)`;
+  sty(el.endBtn, 'transform', `translateY(${(10 * (1 - eOut(ramp(ev, 0.6, 0.4)))).toFixed(1)}px)`);
 }
 
 // ---------------------------------------------------------------- the frame
-let tReady = null;
+let tReady = null, loaderDone = false;
 function loaderStep(T) {
+  if (loaderDone) return;
   const p = Math.min(window.__loader.p, cl((T - 0.6) / 1.0));
   if (OFF && window.__loader.p >= 1) { tReady = 1.6; tB = 1.8; }
   else if (p >= 1 && tReady === null) { tReady = T; tB = T + 0.2; }
-  window.__drawLoader(T, p, tB < Infinity ? ramp(T - tB, 0, 0.95) : 0, F.slot);
+  const k = tB < Infinity ? ramp(T - tB, 0, 0.95) : 0;
+  window.__drawLoader(T, p, k, F.slot);
+  if (k >= 1 && !OFF) loaderDone = true;   // the key plan has landed in the title block: it is drawn again only if the slot moves
 }
-let lastY = -1, dirty = true, curS = null;
+let lastY = -1, curS = null;
+// One frame. Returns true if the picture was drawn again (the page at rest draws nothing).
 function update(T, y, force = false) {
   loaderStep(T);
   const b = T - tB;
@@ -538,33 +560,59 @@ function update(T, y, force = false) {
   for (const n of notes) n(b, S);
   hud(T, S);
   const building = !(b > 3.8);
-  if (building || Math.abs(y - lastY) > 1e-6 || dirty || force) {
+  const draw = building || Math.abs(y - lastY) > 1e-6 || dirty || force;
+  if (draw) {
     drawing.parts.front.visible = S.front; real.setFront(S.front);
-    const nd = drawing.renderND(cam);
-    let rr = null;
-    if (S.real) rr = real.render(nd, S.front);
-    drawing.compose(cam, {
-      cAccent: ACC_COL,
-      uEarth: eOut(ramp(b, 0.15, 0.85)),
-      uLines: -1.6 + 2.7 * eOut(ramp(b, 0.25, 0.6)) + 26 * eIO(ramp(b, 0.85, 1.45)),
-      uPoche: eIO(ramp(b, 0.5, 1.3)),
-      uScanX: S.scanX, uScan: S.scanLine, uReal: S.real ? 1 : 0, uShaft: S.shaft, uSunDir: SUN_DIR,
-      uSweepMode: 3, uTime: T,
-      tReal: rr ? rr.color : null, tShaft: rr ? rr.shafts : null,
-      uDpr: DPR, px: 1, dK: 1.6, uShaftK: F.portrait ? 0.65 : 1,
-    });
+    const beams = S.real && S.shaft > 0.002;
+    if (S.chapter === 'walk') {
+      // inside the house there is no ink on screen: the lit house, its sunbeams, nothing else
+      const rr = real.render(S.front, beams);
+      drawing.present(cam, { tReal: rr.color, tShaft: rr.shafts, uShaft: S.shaft, uSunDir: SUN_DIR, uShaftK: F.portrait ? 0.65 : 1 });
+    } else {
+      drawing.renderND(cam);
+      const rr = S.real ? real.render(S.front, beams) : null;
+      drawing.compose(cam, {
+        cAccent: ACC_COL,
+        uEarth: eOut(ramp(b, 0.15, 0.85)),
+        uLines: -1.6 + 2.7 * eOut(ramp(b, 0.25, 0.6)) + 26 * eIO(ramp(b, 0.85, 1.45)),
+        uPoche: eIO(ramp(b, 0.5, 1.3)),
+        uScanX: S.scanX, uScan: S.scanLine, uReal: S.real ? 1 : 0, uShaft: S.shaft, uSunDir: SUN_DIR,
+        tReal: rr ? rr.color : null, tShaft: rr ? rr.shafts : null,
+        uDpr: renderer.getPixelRatio(), px: 1, dK: 1.6, uShaftK: F.portrait ? 0.65 : 1,
+      });
+    }
     dirty = false;
   }
   lastY = y;
-  window.__st = { T, y: +y.toFixed(3), b, chapter: S.chapter, fov: +cam.userData.fov.toFixed(2), pos: cam.position.toArray().map((v) => +v.toFixed(2)), scanX: +S.scanX.toFixed(2), front: S.front };
+  window.__st = { T, y: +y.toFixed(3), b, chapter: S.chapter, fov: +cam.userData.fov.toFixed(2), pos: cam.position.toArray().map((v) => +v.toFixed(2)), scanX: +S.scanX.toFixed(2), front: S.front, dpr: renderer.getPixelRatio(), tier };
+  return draw;
 }
 
 buildNotes();
-addEventListener('resize', () => { sizes(); buildNotes(); dirty = true; });
+// A real change of the box rebuilds everything. The URL bar of a phone only moves the bottom of the visible page:
+// then the title block (and the key plan in it) has moved, nothing else.
+let rsT = 0;
+addEventListener('resize', () => {
+  clearTimeout(rsT);
+  rsT = setTimeout(() => {
+    const landed = loaderDone;
+    if (boxW() === W && boxH() === H) {
+      F.slot = document.querySelector('#tb .kp').getBoundingClientRect();
+      if (landed) window.__drawLoader((performance.now() - window.__T0) / 1000, 1, 1, F.slot);
+      return;
+    }
+    frames(); buildWalk(); chapters();
+    if (pinnedDpr != null) sizesGL(); else gov.refit();
+    gov.hold(); buildNotes(); loaderDone = false; dirty = true;
+  }, 80);
+}, { passive: true });
 
-// first frames behind the loader: build every shader (the drawing, the lit house, the beams) while nothing shows
+// first frames behind the loader: build every shader and upload every texture (the drawing, the scan with the lit
+// house behind it, the walk, the front half of the house) while nothing shows, so no chapter stutters when it arrives
 update(0, 0, true);
+update(0, (CH.sweep[0] + CH.sweep[1]) / 2, true);
 update(0, CH.walk[0] + 0.5, true);
+update(0, CH.swing[1] + (WALK.inAt + 30) / 100, true);
 update(0, 0, true);
 await document.fonts.ready;
 window.__loader.p = 1;
@@ -624,21 +672,25 @@ window.__bench = (n = 60, y0 = 0, y1 = total()) => {
   renderer.info.autoReset = true;
   return out;
 };
-window.__ready = true;
+window.__dbg = { renderer, real, cam, THREE, drawing }; window.__ready = true;
 
+// The loop. A frame is only worked out while something moves: the scroll, the first seconds of the page, the swap of
+// the title block. At rest, and while the page is hidden, it costs a comparison.
 let yCur = 0, last = performance.now();
-function loop() {
-  const now = performance.now(), dt = Math.min(0.1, (now - last) / 1000); last = now;
-  if (!OFF) {
-    const T = (now - window.__T0) / 1000;
-    const yT = scrollY / innerHeight;
-    if (REDUCED) yCur = yT;
-    else {
-      yCur += (yT - yCur) * (1 - Math.exp(-dt * 6));
-      if (Math.abs(yT - yCur) < 1e-4) yCur = yT;
-    }
-    update(T, yCur);
-  }
+function loop(now) {
   requestAnimationFrame(loop);
+  const dt = Math.min(0.1, (now - last) / 1000); last = now;
+  if (OFF) return;
+  if (!visible()) { gov.frame(now, false); return; }
+  const T = (now - window.__T0) / 1000;
+  const yT = scrollY / H;
+  const moving = Math.abs(yT - yCur) > 1e-4;
+  if (REDUCED || !moving) yCur = yT;
+  else yCur += (yT - yCur) * (1 - Math.exp(-dt * 6));
+  const intro = !(T - tB > 4.4);   // also true while loading (tB is still infinite)
+  if (intro) gov.hold(600);
+  const drew = moving || dirty || intro || poke || T - tbSwap < 0.45 ? update(T, yCur) : false;
+  poke = false;
+  gov.frame(now, drew);
 }
 requestAnimationFrame(loop);

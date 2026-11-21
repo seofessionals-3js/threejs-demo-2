@@ -3,18 +3,22 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#e9e7e0">
 <title>three.js Demo 2</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,500;0,600;0,700;1,600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
-    /* black sheet, white ink, red pen */
-    --paper: #0c0c0e;
-    --ink: #f1eeea;
-    --accent: #e5202e;
-    --accent-hi: #ff4d57;
-    --surface: rgba(20, 20, 23, 0.92);
+    /* ink on tracing vellum: vellum sheet, ink lines, sun orange for the sun study */
+    --paper: #e9e7e0;
+    --paper-hi: #f4f3ee;
+    --paper-lo: #dddad1;
+    --ink: #1b1c1e;
+    --accent: #e07a12;
+    --accent-hi: #f39a36;
+    --accent-ink: #a85400;
+    --surface: rgba(244, 243, 238, 0.94);
     --mono: 'IBM Plex Mono', ui-monospace, monospace;
     --display: 'Chakra Petch', sans-serif;
     --sans: 'Chakra Petch', sans-serif;
@@ -22,17 +26,19 @@
   }
   html, body { margin: 0; background: var(--paper); color: var(--ink); }
   body { overscroll-behavior: none; -webkit-font-smoothing: antialiased; }
-  #gl { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; }
-  #ov { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+  /* the picture and the notes drawn over it share one box: as tall as the largest viewport, so the URL bar of a phone
+     sliding in and out never resizes or stretches it */
+  #gl, #ov { position: fixed; left: 0; top: 0; width: 100vw; height: 100vh; height: 100lvh; display: block; }
+  #ov { pointer-events: none; overflow: visible; }
   #ov text { font-family: var(--mono); font-size: 10.5px; letter-spacing: .08em; fill: var(--ink); }
   #ov .room { font-size: 9.5px; letter-spacing: .16em; font-weight: 500; }
-  #ov .sun { fill: var(--accent-hi); font-weight: 500; }
+  #ov .sun { fill: var(--accent-ink); font-weight: 500; }
   #hud { position: fixed; inset: 0; pointer-events: none; }
   #hud > * { position: absolute; }
 
   /* Viewport CAD registration brackets */
   #cad-hud { display: block; inset: 12px; pointer-events: none; z-index: 2; }
-  #cad-hud .ch-c { position: absolute; width: 14px; height: 14px; border-color: rgba(241, 238, 234, 0.45); border-style: solid; }
+  #cad-hud .ch-c { position: absolute; width: 14px; height: 14px; border-color: rgba(27, 28, 30, 0.45); border-style: solid; }
   #cad-hud .tl { left: 0; top: 0; border-width: 1.5px 0 0 1.5px; }
   #cad-hud .tr { right: 0; top: 0; border-width: 1.5px 1.5px 0 0; }
   #cad-hud .bl { left: 0; bottom: 0; border-width: 0 0 1.5px 1.5px; }
@@ -49,7 +55,7 @@
   .cta {
     right: var(--g); top: 20px;
     font: 600 10.5px var(--mono); letter-spacing: .12em; text-transform: uppercase;
-    background: rgba(12, 12, 14, 0.94); border: 1.5px solid var(--ink);
+    background: rgba(244, 243, 238, 0.94); border: 1.5px solid var(--ink);
     padding: 8px 14px; border-radius: 0; opacity: 0; pointer-events: auto;
     color: var(--ink); text-decoration: none;
   }
@@ -61,8 +67,8 @@
   .head .ln { display: block; overflow: hidden; padding-bottom: .08em; margin-bottom: -.08em; }
   .head .ln > span { display: block; transform: translateY(125%); opacity: 0; }
   .head em {
-    font-style: normal; color: var(--accent);
-    background: rgba(229, 32, 46, 0.1); padding: 0 8px; border-left: 3px solid var(--accent);
+    font-style: normal; color: var(--accent-ink);
+    background: rgba(224, 122, 18, 0.1); padding: 0 8px; border-left: 3px solid var(--accent);
   }
 
   .sub {
@@ -74,17 +80,20 @@
   .chip {
     left: var(--g); bottom: 26px;
     font: 500 10px var(--mono); letter-spacing: .14em; text-transform: uppercase;
-    background: var(--surface); color: var(--ink); padding: 7px 13px; border: 1px solid rgba(241, 238, 234, 0.2);
+    background: var(--surface); color: var(--ink); padding: 7px 13px; border: 1px solid rgba(27, 28, 30, 0.2);
     opacity: 0; white-space: nowrap; z-index: 2;
   }
-  .chip b { font-weight: 600; color: var(--accent-hi); }
+  .chip b { font-weight: 600; color: var(--accent-ink); }
 
   .hint {
     left: 50%; bottom: 24px;
     font: 500 10px var(--mono); letter-spacing: .2em; text-transform: uppercase;
     opacity: 0; white-space: nowrap;
-    background: rgba(12, 12, 14, 0.88); padding: 5px 10px; border: 1px solid rgba(241, 238, 234, 0.2);
+    background: rgba(244, 243, 238, 0.9); padding: 5px 10px; border: 1px solid rgba(27, 28, 30, 0.2);
+    transform: translate(-50%, 0);
   }
+  .hint.bob { animation: hint-bob 2.86s ease-in-out infinite; }
+  @keyframes hint-bob { 0%, 100% { transform: translate(-50%, -2.5px); } 50% { transform: translate(-50%, 2.5px); } }
 
   #tb {
     right: var(--g); bottom: 26px; width: 272px; height: 112px;
@@ -103,34 +112,35 @@
   #tb .fade { opacity: 0; }
   #tb .stamp {
     position: absolute; right: 96px; top: 50px; padding: 4px 8px;
-    border: 1.5px solid var(--accent); color: var(--accent-hi);
+    border: 1.5px solid var(--accent-ink); color: var(--accent-ink);
     font: 600 11px var(--mono); letter-spacing: .16em; text-transform: uppercase;
-    opacity: 0; transform: rotate(-8deg); background: rgba(12, 12, 14, 0.85);
+    opacity: 0; transform: rotate(-8deg); background: rgba(244, 243, 238, 0.92);
   }
 
   #kp { position: fixed; left: 0; top: 0; width: 260px; height: 159px; overflow: visible; pointer-events: none; }
   #kp path, #kp line { fill: none; }
-  #kp text { font-family: var(--mono); fill: var(--accent); }
+  #kp text { font-family: var(--mono); fill: var(--accent-ink); }
   #lcap {
     position: fixed; left: 50%; top: 50%; transform: translate(-50%, 124px);
     text-align: center; font: 500 10.5px/1.9 var(--mono); letter-spacing: .2em;
     text-transform: uppercase; white-space: nowrap;
   }
-  #lcap span { color: var(--accent-hi); font-weight: 600; }
+  #lcap span { color: var(--accent-ink); font-weight: 600; }
   #track { height: 2800vh; }
+  @media (prefers-reduced-motion: reduce) { .hint.bob { animation: none; } }
 
   /* Room callout badge */
   .room {
     left: var(--g); bottom: 64px; opacity: 0;
     display: flex; flex-direction: column; gap: 4px;
     background: var(--surface); color: var(--ink);
-    padding: 14px 18px; border-left: 3px solid var(--accent); box-shadow: inset 0 0 0 1px rgba(241, 238, 234, 0.07);
+    padding: 14px 18px; border-left: 3px solid var(--accent); box-shadow: inset 0 0 0 1px rgba(27, 28, 30, 0.06);
     z-index: 2;
   }
   .room .r-txt { display: flex; flex-direction: column; gap: 4px; }
-  .room .lv { font: 600 10px var(--mono); letter-spacing: .14em; color: var(--accent-hi); }
+  .room .lv { font: 600 10px var(--mono); letter-spacing: .14em; color: var(--accent-ink); }
   .room b { font: 600 32px/1 var(--display); text-transform: uppercase; letter-spacing: .01em; color: var(--ink); }
-  .room .nt { font: 400 10px var(--mono); letter-spacing: .12em; text-transform: uppercase; color: rgba(241, 238, 234, 0.72); }
+  .room .nt { font: 400 10px var(--mono); letter-spacing: .12em; text-transform: uppercase; color: rgba(27, 28, 30, 0.78); }
 
   /* Live CAD section radar */
   #cad-map {
@@ -141,9 +151,9 @@
   }
   #cad-map.interactive { pointer-events: auto; }
   #cad-map svg { width: 100%; height: 70px; display: block; margin-top: 4px; overflow: visible; }
-  #cad-map .cm-zone { fill: rgba(229, 32, 46, 0.0); stroke: none; cursor: pointer; transition: fill .15s ease; }
-  #cad-map .cm-zone.active { fill: rgba(229, 32, 46, 0.16); stroke: rgba(229, 32, 46, 0.45); stroke-width: 0.22; }
-  #cad-map .cm-zone:hover { fill: rgba(229, 32, 46, 0.34); stroke: #ff4d57; stroke-width: 0.3; }
+  #cad-map .cm-zone { fill: rgba(224, 122, 18, 0.0); stroke: none; cursor: pointer; transition: fill .15s ease; }
+  #cad-map .cm-zone.active { fill: rgba(224, 122, 18, 0.16); stroke: rgba(224, 122, 18, 0.45); stroke-width: 0.22; }
+  #cad-map .cm-zone:hover { fill: rgba(224, 122, 18, 0.34); stroke: #e07a12; stroke-width: 0.3; }
 
   /* End call to action */
   .end { left: var(--g); top: 80px; visibility: hidden; pointer-events: auto; }
@@ -151,8 +161,8 @@
   .end h2 .ln { display: block; overflow: hidden; padding-bottom: .08em; margin-bottom: -.08em; }
   .end h2 .ln > span { display: block; transform: translateY(110%); }
   .end em {
-    font-style: normal; color: var(--accent);
-    background: rgba(229, 32, 46, 0.1); padding: 0 8px; border-left: 3px solid var(--accent);
+    font-style: normal; color: var(--accent-ink);
+    background: rgba(224, 122, 18, 0.1); padding: 0 8px; border-left: 3px solid var(--accent);
   }
   .end .sub2 { margin: 18px 0 0 2px; font: 500 10.5px/1.6 var(--mono); letter-spacing: .06em; max-width: 330px; text-transform: uppercase; opacity: 0; }
   .end .btn {
@@ -161,7 +171,7 @@
     color: var(--paper); background: var(--ink); padding: 12px 18px;
     border: 1.5px solid var(--ink); border-radius: 0; text-decoration: none; opacity: 0;
   }
-  .end .btn i { font-style: normal; color: var(--accent); margin-left: 8px; }
+  .end .btn i { font-style: normal; color: var(--accent-ink); margin-left: 8px; }
 
   @media (max-aspect-ratio: 9/10) {
     :root { --g: 18px; }
@@ -218,10 +228,10 @@
         <rect class="cm-zone" data-stop="Küche &amp; Essen" data-tag="KÜCHE ±0.00M" x="5.3" y="0" width="6.9" height="2.75"/>
         <rect class="cm-zone" data-stop="Der Wohnraum" data-tag="WOHNEN ±0.00M" x="12.2" y="0" width="4.7" height="2.75"/>
         <rect class="cm-zone" data-stop="Der Garten" data-tag="GARTEN -0.60M" x="17" y="-0.6" width="12" height="3.4"/>
-        <path d="M1.5 0 H5 M5 -0.35 V6.4 H17.6 M5 0 H21 V-0.6 H29.5 M5.3 3.1 H13.6 M9.67 3.1 V6 M13.6 3.1 V4.15 M16.94 0 V6 M7.2 0 L12 3.1" fill="none" stroke="#f1eeea" stroke-width="0.34" opacity="0.72" pointer-events="none"/>
-        <polygon id="cm-cone" points="11.5,1.6 8.1,3.1 8.1,0.1" fill="rgba(229,32,46,0.3)" stroke="#e5202e" stroke-width="0.2" pointer-events="none"/>
-        <line id="cm-scan" x1="21.8" y1="-2.2" x2="21.8" y2="7.8" stroke="#e5202e" stroke-width="0.4" stroke-dasharray="1 0.8" pointer-events="none"/>
-        <circle id="cm-dot" cx="11.5" cy="1.6" r="0.9" fill="#e5202e" pointer-events="none"/>
+        <path d="M1.5 0 H5 M5 -0.35 V6.4 H17.6 M5 0 H21 V-0.6 H29.5 M5.3 3.1 H13.6 M9.67 3.1 V6 M13.6 3.1 V4.15 M16.94 0 V6 M7.2 0 L12 3.1" fill="none" stroke="#1b1c1e" stroke-width="0.34" opacity="0.72" pointer-events="none"/>
+        <polygon id="cm-cone" points="11.5,1.6 8.1,3.1 8.1,0.1" fill="rgba(224,122,18,0.3)" stroke="#e07a12" stroke-width="0.2" pointer-events="none"/>
+        <line id="cm-scan" x1="21.8" y1="-2.2" x2="21.8" y2="7.8" stroke="#e07a12" stroke-width="0.4" stroke-dasharray="1 0.8" pointer-events="none"/>
+        <circle id="cm-dot" cx="11.5" cy="1.6" r="0.9" fill="#e07a12" pointer-events="none"/>
       </g>
     </svg>
   </div>
@@ -240,13 +250,13 @@
   </div>
 </div>
 <svg id="kp" viewBox="-0.5 -10.5 27 16.5" aria-hidden="true">
-  <path class="d" pathLength="1" stroke="#f1eeea" data-w="1.4" d="M5 -8 H17 V4 H5 Z"/>
-  <path class="d" pathLength="1" stroke="#f1eeea" data-w="0.9" d="M17 -8 H21 V4 H17"/>
-  <path class="d" pathLength="1" stroke="#f1eeea" data-w="0.9" d="M9.67 -6.4 V-5.4 M9.67 -4.4 V3.7 M5.3 -6.4 H9.67 M13.6 -8 V4"/>
-  <path class="d" pathLength="1" stroke="#f1eeea" data-w="0.7" d="M7.2 -7.7 H12 V-6.5 H7.2 Z M8 -7.7 V-6.5 M8.8 -7.7 V-6.5 M9.6 -7.7 V-6.5 M10.4 -7.7 V-6.5 M11.2 -7.7 V-6.5"/>
-  <line id="kpcut" x1="0.4" y1="0" x2="25.6" y2="0" stroke="#e5202e" data-w="1.4" pathLength="1"/>
-  <g id="kpa0" opacity="0"><path stroke="#e5202e" data-w="1.2" d="M0.4 0 V-2 M-0.25 -1.2 L0.4 -2 L1.05 -1.2"/><text x="0.4" y="-2.7" text-anchor="middle">A</text></g>
-  <g id="kpa1" opacity="0"><path stroke="#e5202e" data-w="1.2" d="M25.6 0 V-2 M24.95 -1.2 L25.6 -2 L26.25 -1.2"/><text x="25.6" y="-2.7" text-anchor="middle">A</text></g>
+  <path class="d" pathLength="1" stroke="#1b1c1e" data-w="1.4" d="M5 -8 H17 V4 H5 Z"/>
+  <path class="d" pathLength="1" stroke="#1b1c1e" data-w="0.9" d="M17 -8 H21 V4 H17"/>
+  <path class="d" pathLength="1" stroke="#1b1c1e" data-w="0.9" d="M9.67 -6.4 V-5.4 M9.67 -4.4 V3.7 M5.3 -6.4 H9.67 M13.6 -8 V4"/>
+  <path class="d" pathLength="1" stroke="#1b1c1e" data-w="0.7" d="M7.2 -7.7 H12 V-6.5 H7.2 Z M8 -7.7 V-6.5 M8.8 -7.7 V-6.5 M9.6 -7.7 V-6.5 M10.4 -7.7 V-6.5 M11.2 -7.7 V-6.5"/>
+  <line id="kpcut" x1="0.4" y1="0" x2="25.6" y2="0" stroke="#e07a12" data-w="1.4" pathLength="1"/>
+  <g id="kpa0" opacity="0"><path stroke="#e07a12" data-w="1.2" d="M0.4 0 V-2 M-0.25 -1.2 L0.4 -2 L1.05 -1.2"/><text x="0.4" y="-2.7" text-anchor="middle">A</text></g>
+  <g id="kpa1" opacity="0"><path stroke="#e07a12" data-w="1.2" d="M25.6 0 V-2 M24.95 -1.2 L25.6 -2 L26.25 -1.2"/><text x="25.6" y="-2.7" text-anchor="middle">A</text></g>
 </svg>
 <div id="lcap"><div>Schnitt A-A</div><div>Lädt <span id="lnum">000</span></div></div>
 <main id="track"></main>
@@ -290,6 +300,8 @@
   "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
 } }
 </script>
+<!-- after the import map (a module fetch before it would void the map): three.js starts loading while main.js is parsed -->
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js">
 <script type="module" src="main.js"></script>
 <!-- three.js Portfolio: when this demo has played to its end, the next one starts by itself -->
 <script src="/threejs-demos/portfolio.js" defer></script>

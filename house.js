@@ -6,6 +6,7 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+import { low } from './quality.js';
 
 let seed = 11;
 export const rnd = () => { seed = (seed + 0x6D2B79F5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
@@ -112,9 +113,13 @@ function structure(box) {
 // ---------------------------------------------------------------- the staging
 // Furniture as rounded boxes and lathes, placed room by room. Pieces carry a material key from look.js.
 function staging(box, item, life) {
-  const rb = (x0, y0, z0, x1, y1, z1, r, m) => { const g = new RoundedBoxGeometry(x1 - x0, y1 - y0, z1 - z0, 3, Math.min(r, (x1 - x0) / 2.1, (y1 - y0) / 2.1, (z1 - z0) / 2.1)); g.translate((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2); item(g, m); };
-  const cyl = (x, y, z, r0, r1, h, m, seg = 24, open = false) => { const g = new THREE.CylinderGeometry(r0, r1, h, seg, 1, open); g.translate(x, y + h / 2, z); item(g, m); };
-  const sph = (x, y, z, r, m) => { const g = new THREE.SphereGeometry(r, 24, 16); g.translate(x, y, z); item(g, m); };
+  // a rounded box only gets the segments its radius can show: a 1 cm arris needs one bevel, a cushion needs a curve
+  const rb = (x0, y0, z0, x1, y1, z1, r, m) => {
+    const rr = Math.min(r, (x1 - x0) / 2.1, (y1 - y0) / 2.1, (z1 - z0) / 2.1), seg = rr < 0.022 ? 1 : low || rr < 0.045 ? 2 : 3;
+    const g = new RoundedBoxGeometry(x1 - x0, y1 - y0, z1 - z0, seg, rr); g.translate((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2); item(g, m);
+  };
+  const cyl = (x, y, z, r0, r1, h, m, seg = 24, open = false) => { const g = new THREE.CylinderGeometry(r0, r1, h, low ? Math.min(seg, 18) : seg, 1, open); g.translate(x, y + h / 2, z); item(g, m); };
+  const sph = (x, y, z, r, m) => { const g = new THREE.SphereGeometry(r, low ? 18 : 24, low ? 12 : 16); g.translate(x, y, z); item(g, m); };
   const F = (x0, y0, z0, x1, y1, z1, m) => box(x0, y0, z0, x1, y1, z1, m, 'furn');
   const chair = (x, z, face, y = 0) => { // a wooden dining chair, face = +1 looks +z, -1 looks -z
     const s = face;
@@ -234,7 +239,7 @@ function staging(box, item, life) {
   // a bench at the foot of the bed, a wardrobe along the wall of the stair, a curtain at the window
   for (const sz of [-3.38, -1.82]) F(7.92, Y + 0.02, sz - 0.02, 8.28, Y + 0.26, sz + 0.02, 'blackSteel');
   rb(7.88, Y + 0.26, -3.5, 8.32, Y + 0.32, -1.7, 0.015, 'walnut');
-  for (let i = 0; i < 3; i++) rb(7.89, Y + 0.32, -3.49 + i * 0.6, 8.31, Y + 0.46, -2.91 + i * 0.6, 0.045, 'cognac');
+  for (let i = 0; i < 3; i++) rb(7.89, Y + 0.32, -3.49 + i * 0.6, 8.31, Y + 0.46, -2.91 + i * 0.6, 0.045, 'leather');
   F(5.6, Y, -6.33, 8.6, Y + 2.4, -5.75, 'walnutDoors');
   F(5.34, 5.94, -5.72, 5.5, 5.98, -4.6, 'blackSteel');
   curtain(5.42, Y + 0.01, 5.94, -5.7, -4.66);
@@ -270,7 +275,7 @@ function staging(box, item, life) {
   for (const [px, py, pz] of [[14.9, 4.3, -4.5], [15.45, 3.8, -4.0], [15.0, 3.35, -3.5]]) { cyl(px, py, pz, 0.004, 0.004, 6.0 - py, 'blackSteel', 4); sph(px, py, pz, 0.15, 'opal'); }
   // front part: a daybed under the window, a lounge chair, a floor lamp
   F(10.42, Y + 0.02, 2.75, 13.0, Y + 0.1, 3.6, 'walnut');
-  rb(10.36, Y + 0.1, 2.7, 13.06, Y + 0.4, 3.66, 0.05, 'cognac');
+  rb(10.36, Y + 0.1, 2.7, 13.06, Y + 0.4, 3.66, 0.05, 'leather');
   rb(10.5, Y + 0.4, 3.3, 10.95, Y + 0.74, 3.42, 0.05, 'cushionSage'); rb(11.05, Y + 0.4, 3.3, 11.5, Y + 0.76, 3.42, 0.05, 'boucle');
   rb(12.3, Y + 0.12, 0.9, 13.1, Y + 0.42, 1.7, 0.06, 'boucle'); rb(12.9, Y + 0.3, 0.9, 13.1, Y + 0.86, 1.7, 0.06, 'boucle');
   F(12.35, Y, 0.95, 13.05, Y + 0.12, 1.65, 'blackSteel');
@@ -290,13 +295,15 @@ const figureGeo = () => {
   g.scale(1, 1, 0.62); return g;
 };
 
-// a crown of small leaves, merged into one geometry: clusters are [cx, cy, cz, rx, ry, rz, count]
+// a crown of small leaves, merged into one geometry: clusters are [cx, cy, cz, rx, ry, rz, count].
+// A leaf is a flattened octahedron (8 triangles): two thirds of all triangles of the page used to be 20-sided leaves.
 function canopy(clusters, s0, s1) {
   const list = [];
   for (const [cx, cy, cz, rx, ry, rz, n] of clusters) for (let i = 0; i < n; i++) {
     let x, y, z; do { x = rnd() * 2 - 1; y = rnd() * 2 - 1; z = rnd() * 2 - 1; } while (x * x + y * y + z * z > 1);
-    const k = 0.6 + 0.4 * Math.sqrt(rnd());
-    const g = new THREE.IcosahedronGeometry(s0 + rnd() * (s1 - s0), 0); g.scale(1, 0.55, 1); g.rotateX(rnd() * 3); g.rotateZ(rnd() * 3);
+    const k = 0.6 + 0.4 * Math.sqrt(rnd()), r = s0 + rnd() * (s1 - s0), ax = rnd() * 3, az = rnd() * 3;
+    if (low && i % 10 > 6) continue;           // the phone draws seven leaves in ten; every tier rolls the same dice
+    const g = new THREE.OctahedronGeometry(r * (low ? 1.3 : 1.14), 0); g.scale(1, 0.5, 1); g.rotateX(ax); g.rotateZ(az);
     g.translate(cx + x * rx * k, cy + y * ry * k, cz + z * rz * k); list.push(g);
   }
   return mergeGeometries(list);

@@ -1,4 +1,6 @@
-# three.js Demo 2
+# three.js Demo 3
+
+In der Übersicht und in der durchlaufenden Schau ist das die Nummer 3; das Repository heißt weiter `threejs-demo-2`, damit alle Adressen gültig bleiben.
 
 Eine Schnittzeichnung eines zweigeschossigen Hauses, in Tusche auf Transparentpapier gezeichnet. Beim Scrollen öffnet sich das Objektiv in die Tiefe, eine Scan-Ebene verwandelt die Tusche in beleuchtetes Material, und die gezeichneten Sonnenwinkel werden zu echten Sonnenstrahlen. Dann gehen Sie durch den Schnitt hinein, Raum für Raum, hinaus in den Garten, und kommen wieder heraus zur Zeichnung.
 
